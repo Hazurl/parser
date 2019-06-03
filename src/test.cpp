@@ -10,31 +10,31 @@
 #include <ws/parser/token/Token.hpp>
 
 ws::parser::Token number(float f) {
-    return {std::to_string(f), ws::parser::TokenType::Literal, ws::parser::TokenSubType::Float};
+    return {std::to_string(f), ws::parser::TokenType::Literal, ws::parser::TokenSubType::Float, 0, 0};
 }
 
 ws::parser::Token plus() {
-    return {"+", ws::parser::TokenType::Operator, ws::parser::TokenSubType::Plus};
+    return {"+", ws::parser::TokenType::Operator, ws::parser::TokenSubType::Plus, 0, 0};
 }
 
 ws::parser::Token mult() {
-    return {"*", ws::parser::TokenType::Operator, ws::parser::TokenSubType::Multiplication};
+    return {"*", ws::parser::TokenType::Operator, ws::parser::TokenSubType::Multiplication, 0, 0};
 }
 
 ws::parser::Token div() {
-    return {"/", ws::parser::TokenType::Operator, ws::parser::TokenSubType::Division};
+    return {"/", ws::parser::TokenType::Operator, ws::parser::TokenSubType::Division, 0, 0};
 }
 
 ws::parser::Token sub() {
-    return {"-", ws::parser::TokenType::Operator, ws::parser::TokenSubType::Minus};
+    return {"-", ws::parser::TokenType::Operator, ws::parser::TokenSubType::Minus, 0, 0};
 }
 
 ws::parser::Token left() {
-    return {"(", ws::parser::TokenType::Parenthesis, ws::parser::TokenSubType::Left};
+    return {"(", ws::parser::TokenType::Parenthesis, ws::parser::TokenSubType::Left, 0, 0};
 }
 
 ws::parser::Token right() {
-    return {")", ws::parser::TokenType::Parenthesis, ws::parser::TokenSubType::Right};
+    return {")", ws::parser::TokenType::Parenthesis, ws::parser::TokenSubType::Right, 0, 0};
 }
 
 std::optional<ws::parser::Token> tokenize(char c) {
