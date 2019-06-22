@@ -37,6 +37,15 @@ struct EndOfFile {
     }
 };
 
+template<typename...Ts>
+std::ostream& operator <<(std::ostream& os, EndOfFile) {
+    return os << "End of file";
+}
+
+bool operator ==(EndOfFile, EndOfFile) {
+    return true;
+}
+
 }
 
 template<typename C>
