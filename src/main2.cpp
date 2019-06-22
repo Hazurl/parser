@@ -8,8 +8,8 @@
 
 #include <module/module.h>
 #include <json.hpp>
-#include <ws/parser2/ParserInternal.hpp>
-#include <ws/parser2/Storage.hpp>
+#include <ws/parser2/Parsers.hpp>
+#include <ws/parser2/Containers.hpp>
 #include <ws/parser2/Details.hpp>
 
 struct StringReader {
