@@ -3,10 +3,14 @@
 #include <optional>
 #include <sstream>
 #include <variant>
+#include <type_traits>
+#include <experimental/type_traits>
 
 #include <module/module.h>
 #include <json.hpp>
-//#include <ws/parser2/ParserInternal.hpp>
+#include <ws/parser2/ParserInternal.hpp>
+#include <ws/parser2/Storage.hpp>
+#include <ws/parser2/Details.hpp>
 
 struct StringReader {
     std::string_view str;
@@ -24,6 +28,10 @@ struct StringReader {
         ++cursor;
     }
 
+    char peek() const {
+        return get();
+    }
+
     StringReader copy_with_cursor(std::size_t c) const {
         return {
             str,
@@ -31,18 +39,12 @@ struct StringReader {
         };
     }
 };
-/*
-using namespace ws::parser2;
-
-template<typename A, typename B, typename = std::enable_if_t<std::decay<A>::is_parser && std::decay<B>::is_parser>>
-decltype(auto) operator,(A a, B b) {
-    return Product{ a, b };
-}
-*/
-
 
 template<typename P, auto& F>
 struct Transformer;
+
+template<typename...>
+struct Show;
 
 template<typename P, typename T>
 struct IParser {
@@ -343,44 +345,20 @@ struct Logger : IParser<Logger<P>, parsed_type_t<P>> {
 
 static const char something_str[] = "something";
 
+struct NewGet : ws::parser2::Parser<NewGet, char> {
+    template<typename R>
+    static ws::parser2::Result<char> parse(R r) {
+        auto c = r.get();
+        //r.next();
+        return {std::in_place_index_t<0>{}, r.cursor, ws::parser2::Success<char>{ c }};
+    }
+};
+
+static_assert(ws::parser2::details::is_parser_v<NewGet, StringReader>, "...");
+
 
 int main() {
-/*
-    auto chr = Get{};
-    auto parser = (chr, chr);
-
-    auto reader = StringReader{ std::string_view{ "something" } };
-    Result<std::tuple<char, char>, EndOfFile> res = parser.parse(reader, 0);
-
-    while(res.is_success()) {
-        auto const& success = res.success();
-        std::cout << ">> '" << std::get<0>(success.value) << ", " << std::get<1>(success.value) << "'\n";
-        res = parser.parse(reader.copy_with_cursor(success.cursor), 0);
-    }
-
-    auto const& error = res.error<EndOfFile>();
-    std::cout << "EndOfFile\n";
-*/
-    {
-        auto reader = StringReader{ std::string_view{ "something" } };
-        std::cout << "'" << get<StringReader>(reader) << "'" << '\n';
-    }
-    {
-        auto reader = StringReader{ std::string_view{ "     something" } };
-        std::cout << "'" << getNotSpaces<StringReader>(reader) << "'" << '\n';
-    }
-    {
-        auto reader = StringReader{ std::string_view{ "(((2)))" } };
-        std::cout << digit<StringReader>(reader) << '\n';
-    }
-    {
-        auto reader = StringReader{ std::string_view{ "something" } };
-        auto ret = get2<StringReader>(reader);
-        std::cout << ret.first << ", " << ret.second << '\n';
-    }
-
     std::cout << '\n';
-
     {
         auto reader = StringReader{ std::string_view{ "something" } };
         std::cout << "'" << Get::parse(reader) << "'" << '\n';
@@ -418,6 +396,59 @@ int main() {
     {
         auto reader = StringReader{ std::string_view{ "(((2)))(((2)))" } };
         std::cout << test_p::parse(reader) << '\n';
+    }
+
+    std::cout << '\n';
+
+    static_assert(ws::parser2::details::is_parser_v<ws::parser2::Next<char>, StringReader>, "...");
+
+    {
+        auto reader = StringReader{ std::string_view{ "something" } };
+        auto ret = ws::parser2::Next<char>::parse(reader);
+        if (ret.is_error()) {
+            std::cout << "Error: " << ret.what() << '\n';
+        } else {
+            std::cout << "'" << ret.success() << "'" << '\n';
+        }
+    }
+    {
+        auto reader = StringReader{ std::string_view{ "" } };
+        auto ret = ws::parser2::Next<char>::parse(reader);
+        if (ret.is_error()) {
+            std::cout << "Error: " << ret.what() << '\n';
+        } else {
+            std::cout << "'" << ret.success() << "'" << '\n';
+        }
+    }
+    {
+        auto reader = StringReader{ std::string_view{ "" } };
+        
+        using namespace ws::parser2;
+
+        auto ret = decltype(opt<nextc>)::parse(reader);
+        if (ret.is_error()) {
+            std::cout << "Error: " << ret.what() << '\n';
+        } else {
+            if (ret.success().has_value())
+                std::cout << "'" << ret.success().value() << "'" << '\n';
+            else
+                std::cout << "None\n";
+        }
+    }
+    {
+        auto reader = StringReader{ std::string_view{ "a" } };
+        
+        using namespace ws::parser2;
+
+        auto ret = decltype(opt<nextc>)::parse(reader);
+        if (ret.is_error()) {
+            std::cout << "Error: " << ret.what() << '\n';
+        } else {
+            if (ret.success().has_value())
+                std::cout << "'" << ret.success().value() << "'" << '\n';
+            else
+                std::cout << "None\n";
+        }
     }
 
 
