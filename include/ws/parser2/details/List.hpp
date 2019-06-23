@@ -183,4 +183,53 @@ struct IndexOf<List<_, Es...>, E, I> : IndexOf<List<Es...>, E, I-1> {};
 template<typename L, typename E>
 static inline constexpr std::size_t index_of_v{ IndexOf<L, E, 0>::value };
 
+
+
+
+
+/*
+    Element at `I` in the list `L`
+*/
+template<typename L, std::size_t I>
+struct At {};
+
+template<std::size_t I>
+struct At<List<>, I> {};
+
+template<typename T, typename...Ts>
+struct At<List<T, Ts...>, 0> {
+    using type = T;
+};
+
+template<typename T, typename...Ts, std::size_t I>
+struct At<List<T, Ts...>, I> : At<List<Ts...>, I-1> {};
+
+template<typename L, std::size_t I>
+using at_t = typename At<L, I>::type; 
+
+
+
+
+
+
+/*
+    Flatten the list of lists `L` and removes and
+ */
+template<template<typename A, typename B> typename P, typename F, typename L>
+struct FlattenWith {};
+
+template<template<typename A, typename B> typename P, typename F>
+struct FlattenWith<P, F, List<>> {
+    using type = F;
+};
+
+template<template<typename A, typename B> typename P, typename F, typename T, typename...Ts>
+struct FlattenWith<P, F, List<T, Ts...>> : FlattenWith<P, P<T, F>, List<Ts...>> {};
+
+template<typename L>
+using flatten_t = typename FlattenWith<concatenate_t, List<>, L>::type;
+
+template<typename L>
+using flatten_unique_t = typename FlattenWith<concatenate_unique_t, List<>, L>::type;
+
 }

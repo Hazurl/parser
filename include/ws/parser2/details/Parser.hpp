@@ -3,6 +3,9 @@
 #include <type_traits>
 #include <experimental/type_traits>
 
+#include <ws/parser2/containers/Parser.hpp>
+#include <ws/parser2/details/List.hpp>
+
 namespace ws::parser2::details {
 
 /*
@@ -62,5 +65,23 @@ using parsed_type_t = typename is_parser<P, soft_check_t, void>::parsed_type;
 template<typename P>
 using result_type_t = typename is_parser<P, soft_check_t, void>::result_type;
 
+
+
+
+
+
+/*
+    Construct a Parser-type from a list of errors
+ */
+template<typename P, typename T, typename L>
+struct ErrorsToParser {};
+
+template<typename P, typename T, typename...Es>
+struct ErrorsToParser<P, T, List<Es...>> {
+    using type = Parser<P, T, Es...>;
+};
+
+template<typename P, typename T, typename L>
+using parser_from_list_t = typename ErrorsToParser<P, T, L>::type;
 
 }

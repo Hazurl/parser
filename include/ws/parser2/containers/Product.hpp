@@ -30,7 +30,9 @@ bool equal_product_helper(Product<Ts...> const& lhs, Product<Ts...> const& rhs, 
  */
 
 template<typename...Ts>
-struct Product : std::tuple<Ts...> {};
+struct Product : std::tuple<Ts...> {
+    Product(Ts... ts) : std::tuple<Ts...>(std::move(ts)...) {};
+};
 
 template<typename...Ts> Product(Ts...) -> Product<Ts...>;
 

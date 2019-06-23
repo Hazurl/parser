@@ -44,7 +44,7 @@ template<typename R, typename P, std::size_t N>
 void test(char const* message, char const (&input)[N], R expected, P) {
     static_assert(ws::parser2::details::is_parser_v<P, StringReader>, "Unfortunetly, P is not a parser...");
 
-    StringReader reader{ std::string_view{ input } };
+    StringReader reader{ std::string_view{ input }, 0 };
     auto res = P::parse(reader);
 
     if (res.is_error()) {
@@ -75,7 +75,7 @@ template<typename E, typename P, std::size_t N>
 void test_err(char const* message, char const (&input)[N], E error, P) {
     static_assert(ws::parser2::details::is_parser_v<P, StringReader>, "Unfortunetly, P is not a parser...");
 
-    StringReader reader{ std::string_view{ input } };
+    StringReader reader{ std::string_view{ input }, 0 };
     auto res = P::parse(reader);
 
     if (res.is_success()) {
@@ -111,6 +111,9 @@ void test_err(char const* message, char const (&input)[N], E error, P) {
         " with [", ws::module::style::bold, ws::module::colour::fg::cyan, input, ws::module::style::reset, "] successfully failed");
 }
 
+template<typename...>
+struct Show;
+
 int main() {
     test(
         "Simple Next",
@@ -138,6 +141,27 @@ int main() {
         "",
         ws::parser2::Maybe<char>{},
         ws::parser2::opt<ws::parser2::nextc>
+    );
+
+    test(
+        "Double Next",
+        "something",
+        ws::parser2::Product('s', 'o'),
+        ws::parser2::seq<ws::parser2::nextc, ws::parser2::nextc>
+    );
+
+    test_err(
+        "Seq, first error",
+        "",
+        ws::parser2::error::EndOfFile{},
+        ws::parser2::seq<ws::parser2::nextc, ws::parser2::nextc>
+    );
+
+    test_err(
+        "Seq, second error",
+        "s",
+        ws::parser2::error::EndOfFile{},
+        ws::parser2::seq<ws::parser2::nextc, ws::parser2::nextc>
     );
 
     return 0;
