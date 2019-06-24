@@ -12,6 +12,10 @@ namespace ws::parser2 {
     Seq parser
  */
 
+
+template<typename...>
+struct Show;
+
 template<typename...Ps>
 struct Seq : std::enable_if_t<(true && ... && details::is_parser_soft_check_v<Ps>), 
     details::parser_from_list_t<
@@ -26,11 +30,15 @@ private:
 
     using tmp_tuple_t = std::tuple<std::optional<details::parsed_type_t<Ps>>...>;
     using product_t = Product<details::parsed_type_t<Ps>...>;
+    using result_t = details::result_type_t<Seq<Ps...>>;
+    //details::list_to_t<details::push_t<Product<details::parsed_type_t<Ps>...>, details::flatten_unique_t<details::List<details::list_from_errors_t<details::result_type_t<Ps>>...>>>, Result>;
+
+    //Show<tmp_tuple_t, product_t, result_t> ___;
 
 public:
 
     template<typename R>
-    static details::result_type_t<Seq<Ps...>> parse(R reader) {
+    static result_t parse(R reader) {
         tmp_tuple_t tmp_res;
         return parse_at<0>(tmp_res, reader);
     }
@@ -38,7 +46,7 @@ public:
 private:
 
     template<std::size_t I, typename R>
-    static details::result_type_t<Seq<Ps...>> parse_at(tmp_tuple_t& tmp_res, R reader) {
+    static result_t parse_at(tmp_tuple_t& tmp_res, R reader) {
         if constexpr (I < sizeof...(Ps)) {
             using P = details::at_t<details::List<Ps...>, I>;
             auto res = P::parse(reader);

@@ -232,4 +232,24 @@ using flatten_t = typename FlattenWith<concatenate_t, List<>, L>::type;
 template<typename L>
 using flatten_unique_t = typename FlattenWith<concatenate_unique_t, List<>, L>::type;
 
+
+
+
+
+
+/*
+    Length of the list `L`
+ */
+
+template<typename L>
+struct Length {};
+
+template<typename...Ts>
+struct Length<List<Ts...>> {
+    static constexpr std::size_t value{ sizeof...(Ts) };
+};
+
+template<typename L>
+constexpr std::size_t length_v = Length<L>::value;
+
 }

@@ -17,6 +17,7 @@ template<typename P, typename T, typename...E>
 struct Parser {
     using parsed_type = T;
     using result_type = Result<T, E...>;
+    using parser_type = Parser<P, T, E...>;
 
     template<typename F>
     Transformer<P, F::func> operator[] (F) const;

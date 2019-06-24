@@ -13,7 +13,7 @@ namespace ws::parser2 {
     -- return null when the underlying parser `P` failed
  */
 
-template<typename P, std::enable_if_t<details::is_parser_soft_check_v<P>, bool> = true>
+template<typename P, std::enable_if_t<details::is_parser_soft_check_v<P>, int> = 1337>
 struct Opt : Parser<Opt<P>, Maybe<details::parsed_type_t<P>>> {
     template<typename R>
     static details::result_type_t<Opt<P>> parse(R reader) {
