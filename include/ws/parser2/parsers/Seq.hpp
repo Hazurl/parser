@@ -63,8 +63,6 @@ private:
             }
         }
 
-        std::cout << "Before [" << reader.cursor() << "] => After [" << result.cursor << "]\n";
-
         return parse_at<I+1>(
             R::from_cursor(std::move(reader), result.cursor), 
             std::move(rs)..., 

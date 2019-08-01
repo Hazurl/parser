@@ -371,7 +371,7 @@ int main() {
         wspd::is_parser_valid_v<BoundedReader, wsp::Seq<wsp::Seq<wsp::NextC, wsp::NextC>, wsp::NextC>> &&
         wspd::is_parser_valid_v<BoundedReader, wsp::Seq<wsp::Opt<wsp::NextC>, wsp::Seq<wsp::NextC, wsp::NextC>>> &&
         wspd::is_parser_valid_v<BoundedReader, Match<'a'>> &&
-        //wspd::is_parser_valid_v<BoundedReader, wsp::First<Match<'a'>, wsp::NextC>> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::First<Match<'a'>, wsp::NextC>> &&
         true, 
         "Something is wrong...");
 

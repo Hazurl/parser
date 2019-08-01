@@ -29,13 +29,17 @@ bool equal_product_helper(Product<Ts...> const& lhs, Product<Ts...> const& rhs, 
     Product type
  */
 
+struct from_tuple_t {};
+
 template<typename...Ts>
 struct Product : std::tuple<Ts...> {
     Product() = default;
     Product(Ts... ts) : std::tuple<Ts...>(std::move(ts)...) {};
+    Product(from_tuple_t, std::tuple<Ts...> ts) : std::tuple<Ts...>(ts) {};
 };
 
 template<typename...Ts> Product(Ts...) -> Product<Ts...>;
+template<typename...Ts> Product(from_tuple_t, std::tuple<Ts...>) -> Product<Ts...>;
 
 
 
