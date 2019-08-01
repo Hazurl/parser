@@ -17,11 +17,11 @@ struct Next : Parser<Next<C>, C, error::EndOfFile> {
 
     template<typename R>
     static Result<C, error::EndOfFile> parse(R reader) {
-        if (reader.empty()) {
-            return fail<error::EndOfFile>(reader.cursor);
+        if (reader.is_end()) {
+            return fail<error::EndOfFile>(reader.cursor());
         }
 
-        return success(reader.cursor, reader.peek());
+        return success(reader.cursor(), reader.peek());
     }
 
 };

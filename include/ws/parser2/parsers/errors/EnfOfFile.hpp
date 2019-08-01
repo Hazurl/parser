@@ -23,7 +23,6 @@ struct EndOfFile {
     Operator <<
  */
 
-template<typename...Ts>
 std::ostream& operator <<(std::ostream& os, EndOfFile) {
     return os << "End of file";
 }

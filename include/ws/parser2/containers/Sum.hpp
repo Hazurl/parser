@@ -10,7 +10,10 @@ namespace ws::parser2 {
  */
 
 template<typename...Ts>
-struct Sum : std::variant<Ts...> {};
+struct Sum : std::variant<Ts...> {
+    Sum() = default;
+    Sum(Ts... ts) : std::variant<Ts...>(std::move(ts)...) {};
+};
 
 template<typename...Ts> Sum(Ts...) -> Sum<Ts...>;
 

@@ -57,15 +57,15 @@ private:
                 if constexpr (std::is_same_v<Success<details::parsed_type_t<P>>, Err>) {
 
                     std::get<I>(tmp_res) = std::move(err.value);
-                    return Seq<Ps...>::parse_at<I+1>(tmp_res, reader.copy_with_cursor(res.cursor + 1));
+                    return Seq<Ps...>::parse_at<I+1>(tmp_res, R::copy_move(reader, 1));
 
                 } else {
 
-                    return fail<Err>(reader.cursor, std::move(err));
+                    return fail<Err>(reader.cursor(), std::move(err));
                 }
             }, res.value);
         } else {
-            return success(reader.cursor, transform_tmp_tuple(tmp_res, std::make_index_sequence<sizeof...(Ps)>{}));
+            return success(reader.cursor(), transform_tmp_tuple(tmp_res, std::make_index_sequence<sizeof...(Ps)>{}));
         }
     }
 

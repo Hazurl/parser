@@ -20,6 +20,17 @@ struct SetSuccess<S, Result<S_, Es...>> {
 template<typename S, typename R>
 using set_success_t = typename SetSuccess<S, R>::type;
 
+template<typename R>
+struct SuccessOf {};
+
+template<typename S, typename...Es>
+struct SuccessOf<Result<S, Es...>> { 
+    using type = S;
+};
+
+template<typename R>
+using success_of_t = typename SuccessOf<R>::type;
+
 }
 
 

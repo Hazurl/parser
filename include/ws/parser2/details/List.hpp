@@ -178,7 +178,7 @@ struct IndexOf<List<E, Es...>, E, I> {
 };
 
 template<typename _, typename...Es, typename E, std::size_t I>
-struct IndexOf<List<_, Es...>, E, I> : IndexOf<List<Es...>, E, I-1> {};
+struct IndexOf<List<_, Es...>, E, I> : IndexOf<List<Es...>, E, I+1> {};
 
 template<typename L, typename E>
 static inline constexpr std::size_t index_of_v{ IndexOf<L, E, 0>::value };
@@ -251,5 +251,38 @@ struct Length<List<Ts...>> {
 
 template<typename L>
 constexpr std::size_t length_v = Length<L>::value;
+
+
+
+
+
+
+
+/*
+    Map a list `L` with `M`
+ */
+
+template<template<typename> typename M, typename L>
+struct Map {};
+
+template<template<typename> typename M, typename...Ts>
+struct Map<M, List<Ts...>> {
+    using type = List<M<Ts>...>;
+};
+
+template<template<typename> typename M, typename L>
+using map_t = typename Map<M, L>::type;
+
+
+
+
+
+
+
+/*
+    Returns the list of all elements that appears in `L`
+ */
+template<typename L>
+using set_t = flatten_unique_t<map_t<List, L>>;
 
 }

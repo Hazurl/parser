@@ -13,6 +13,8 @@ namespace ws::parser2 {
 
 template<typename S>
 struct Success { 
+    using type = S;
+    
     template<typename...Args>
     Success(Args&&...args) : value(std::forward<Args>(args)...) {}
     

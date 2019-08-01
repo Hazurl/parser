@@ -5,6 +5,7 @@
 #include <variant>
 #include <type_traits>
 #include <experimental/type_traits>
+#include <cassert>
 
 #include <module/module.h>
 #include <json.hpp>
@@ -12,6 +13,63 @@
 #include <ws/parser2/Containers.hpp>
 #include <ws/parser2/Details.hpp>
 
+namespace wsp = ws::parser2;
+namespace wspe = wsp::error;
+namespace wspd = wsp::details;
+
+struct BoundedReader {
+
+    BoundedReader(char const* begin_, char const* end_) 
+        : begin{ begin_                          }, end{ end_               }, index { 0 } {}
+    template<std::size_t N>
+    BoundedReader(char const (&str)[N]) 
+        : begin{ str                             }, end{ str + N - 1        }, index { 0 } {}
+    BoundedReader(std::string const& str) 
+        : begin{ str.empty() ? nullptr : &str[0] }, end{ begin + str.size() }, index { 0 } {}
+    BoundedReader(std::string_view const& str) 
+        : begin{ str.empty() ? nullptr : &str[0] }, end{ begin + str.size() }, index { 0 } {}
+
+    static BoundedReader copy_move(BoundedReader r, std::size_t advance) {
+        r.index += advance;
+        return r;
+    }
+
+    static BoundedReader from_cursor(BoundedReader r, std::size_t cursor) {
+        r.index = cursor;
+        return r;
+    }
+
+    std::size_t cursor() const {
+        return index;
+    }
+
+    bool is_end(std::size_t i = 0) const {
+        return begin + index + i >= end;
+    }
+
+    char const& operator[](std::size_t i) const {
+        assert(!is_end(i));
+        return begin[index + i];
+    }
+
+    char peek() const {
+        return operator[](0);
+    }
+
+
+    BoundedReader& operator++() {
+        ++index;
+        return *this;
+    }
+
+private:
+
+    char const* const begin;
+    char const* const end;
+    std::size_t index;
+
+};
+/*
 struct StringReader {
     std::string_view str;
     std::size_t cursor{ 0 };
@@ -38,81 +96,117 @@ struct StringReader {
             c
         };
     }
-};
+};*/
 
 template<typename...>
 struct debug_t;
 
 template<typename R, typename P, std::size_t N>
 void test(char const* message, char const (&input)[N], R expected, P) {
-    static_assert(ws::parser2::details::is_parser_v<P, StringReader>, "Unfortunetly, P is not a parser...");
+    static_assert(wspd::is_parser_v<P, BoundedReader>, "Unfortunetly, P is not a parser...");
 
-    StringReader reader{ std::string_view{ input }, 0 };
+    BoundedReader reader(input);
     auto res = P::parse(reader);
 
     if (res.is_error()) {
         ws::module::errorln(
-            "[", ws::module::style::bold, message, ws::module::style::reset, "]", 
-            " with [", ws::module::style::bold, ws::module::colour::fg::cyan, input, ws::module::style::reset, "]", 
-            ", expected [", ws::module::style::bold, ws::module::colour::fg::green, expected, ws::module::style::reset, "]",
-            " but got [", ws::module::style::bold, ws::module::colour::fg::red, res.what(), ws::module::style::reset, "]");
+            ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
+            " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
+            ", expected ", ws::module::style::bold, ws::module::colour::fg::green, "[", expected, "]", ws::module::style::reset,
+            " but got ", ws::module::style::bold, ws::module::colour::fg::red, "[", res.what(), "]", ws::module::style::reset);
         return;
     }
 
     auto& value = res.success(); 
     if (!(value == expected)) {
         ws::module::errorln(
-            "[", ws::module::style::bold, message, ws::module::style::reset, "]", 
-            " with [", ws::module::style::bold, ws::module::colour::fg::cyan, input, ws::module::style::reset, "]",
-            ", expected [", ws::module::style::bold, ws::module::colour::fg::green, expected, ws::module::style::reset, "]",
-            " but got [", ws::module::style::bold, ws::module::colour::fg::green, value, ws::module::style::reset, "]");
+            ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
+            " with [", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset,
+            ", expected ", ws::module::style::bold, ws::module::colour::fg::green, "[", expected, "]", ws::module::style::reset,
+            " but got ", ws::module::style::bold, ws::module::colour::fg::green, value, "]", ws::module::style::reset);
         return;
     }
 
     ws::module::successln(
-        "[", ws::module::style::bold, message, ws::module::style::reset, "]", 
-        " with [", ws::module::style::bold, ws::module::colour::fg::cyan, input, ws::module::style::reset, "] parsed successfully");
+        ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
+        " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, " parsed successfully");
 }
 
 template<typename E, typename P, std::size_t N>
 void test_err(char const* message, char const (&input)[N], E error, P) {
-    static_assert(ws::parser2::details::is_parser_v<P, StringReader>, "Unfortunetly, P is not a parser...");
+    static_assert(wspd::is_parser_v<P, BoundedReader>, "Unfortunetly, P is not a parser...");
 
-    StringReader reader{ std::string_view{ input }, 0 };
+    BoundedReader reader(input);
     auto res = P::parse(reader);
 
     if (res.is_success()) {
         ws::module::errorln(
-            "[", ws::module::style::bold, message, ws::module::style::reset, "]", 
-            " with [", ws::module::style::bold, ws::module::colour::fg::cyan, input, ws::module::style::reset, "]", 
-            ", expected [", ws::module::style::bold, ws::module::colour::fg::red, error, ws::module::style::reset, "] but",
-            " got [", ws::module::style::bold, ws::module::colour::fg::green, res.success(), ws::module::style::reset, "]");
+            ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
+            " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
+            ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
+            " got ", ws::module::style::bold, ws::module::colour::fg::green, "[", res.success(), "]", ws::module::style::reset);
         return;
     }
 
     if (!res.template is_error<E>()) {
         ws::module::errorln(
-            "[", ws::module::style::bold, message, ws::module::style::reset, "]", 
-            " with [", ws::module::style::bold, ws::module::colour::fg::cyan, input, ws::module::style::reset, "]", 
-            ", expected [", ws::module::style::bold, ws::module::colour::fg::red, error, ws::module::style::reset, "] but",
-            " got [", ws::module::style::bold, ws::module::colour::fg::red, res.what(), ws::module::style::reset, "]");
+            ws::module::style::bold, "[", message, "]", ws::module::style::reset, "]", 
+            " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
+            ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
+            " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", res.what(), "]", ws::module::style::reset);
         return;
     }
 
     auto& value = res.template error<E>(); 
     if (!(value == error)) {
         ws::module::errorln(
-            "[", ws::module::style::bold, message, ws::module::style::reset, "]", 
-            " with [", ws::module::style::bold, ws::module::colour::fg::cyan, input, ws::module::style::reset, "]", 
-            ", expected [", ws::module::style::bold, ws::module::colour::fg::red, error, ws::module::style::reset, "] but",
-            " got [", ws::module::style::bold, ws::module::colour::fg::red, value, ws::module::style::reset, "]");
+            ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
+            " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
+            ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
+            " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", value, "]", ws::module::style::reset);
         return;
     }
 
     ws::module::successln(
-        "[", ws::module::style::bold, message, ws::module::style::reset, "]", 
-        " with [", ws::module::style::bold, ws::module::colour::fg::cyan, input, ws::module::style::reset, "] successfully failed");
+        ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
+        " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, " successfully failed");
 }
+
+template<char c>
+struct NotMatching {
+    std::string what() const {
+        return "Not matching '" + std::string(1, c) + "' (" + std::to_string(static_cast<int>(c)) + ")";
+    }
+};
+
+template<char c>
+std::ostream& operator <<(std::ostream& os, NotMatching<c>) {
+    return os << "Not matching '" << c << "' (" << static_cast<int>(c) << ')';
+}
+
+template<char c>
+bool operator ==(NotMatching<c>, NotMatching<c>) {
+    return true;
+}
+
+
+template<char c>
+struct Match : wsp::Parser<Match<c>, char, NotMatching<c>, wspe::EndOfFile> {
+    template<typename R> 
+    static wspd::result_type_t<Match<c>> parse(R reader) {
+        auto res = wsp::NextC::parse(reader);
+        if (res.is_success()) {
+            if (res.success() == c) {
+                return wsp::success(res.cursor, res.success());
+            }
+
+            return wsp::fail<NotMatching<c>>(res.cursor);
+        }
+
+        return wsp::fail<wspe::EndOfFile>(res.cursor);
+    }
+};
+
 
 /*
 
@@ -121,81 +215,81 @@ void test_err(char const* message, char const (&input)[N], E error, P) {
  */
 
 /*
-struct GoodParser : ws::parser2::Parser<GoodParser, char, ws::parser2::error::EndOfFile> {
-    template<typename R> static ws::parser2::Result<char, ws::parser2::error::EndOfFile> parse(R reader) { return ws::parser2::success(reader.cursor, '0'); }
+struct GoodParser : wsp::Parser<GoodParser, char, wspe::EndOfFile> {
+    template<typename R> static wsp::Result<char, wspe::EndOfFile> parse(R reader) { return wsp::success(reader.cursor, '0'); }
 };
-static_assert(ws::parser2::details::is_parser_valid_v<StringReader, GoodParser>);
+static_assert(wspd::is_parser_valid_v<BoundedReader, GoodParser>);
 */
 /*
 //    static_assert(parser_details::false_v<T, Es...>, "The parse method's return type should be a Result");
-struct ReturnTypeNotResult : ws::parser2::Parser<ReturnTypeNotResult, char, ws::parser2::error::EndOfFile> {
+struct ReturnTypeNotResult : wsp::Parser<ReturnTypeNotResult, char, wspe::EndOfFile> {
     template<typename R> static char parse(R reader) { return '0'; }
 };
-static_assert(ws::parser2::details::is_parser_valid_v<StringReader, ReturnTypeNotResult>);
+static_assert(wspd::is_parser_valid_v<BoundedReader, ReturnTypeNotResult>);
 */
 /*
 //    static_assert(parser_details::false_v<T>, "The parse method's return type is a Result with the wrong success type");
-struct ResultSuccessWrong : ws::parser2::Parser<ResultSuccessWrong, char, ws::parser2::error::EndOfFile> {
-    template<typename R> static ws::parser2::Result<int, ws::parser2::error::EndOfFile> parse(R reader) { return ws::parser2::success(reader.cursor, 1337); }
+struct ResultSuccessWrong : wsp::Parser<ResultSuccessWrong, char, wspe::EndOfFile> {
+    template<typename R> static wsp::Result<int, wspe::EndOfFile> parse(R reader) { return wsp::success(reader.cursor, 1337); }
 };
-static_assert(ws::parser2::details::is_parser_valid_v<StringReader, ResultSuccessWrong>);
+static_assert(wspd::is_parser_valid_v<BoundedReader, ResultSuccessWrong>);
 */
 /*
 //    static_assert(parser_details::false_v<Es...>, "The parse method's return type is a Result with the wrong error list");
-struct ResultErrorsWrong : ws::parser2::Parser<ResultErrorsWrong, char, ws::parser2::error::EndOfFile> {
-    template<typename R> static ws::parser2::Result<char, ws::parser2::error::EndOfFile, int> parse(R reader) { return ws::parser2::success(reader.cursor, '0'); }
+struct ResultErrorsWrong : wsp::Parser<ResultErrorsWrong, char, wspe::EndOfFile> {
+    template<typename R> static wsp::Result<char, wspe::EndOfFile, int> parse(R reader) { return wsp::success(reader.cursor, '0'); }
 };
-static_assert(ws::parser2::details::is_parser_valid_v<StringReader, ResultErrorsWrong>);
+static_assert(wspd::is_parser_valid_v<BoundedReader, ResultErrorsWrong>);
 */
 /*
 //    static_assert(parser_details::false_v<T, Es...>, "The parse method's return type is a Result with the wrong success type and error list");
-struct ResultSuccessAndErrorsWrong : ws::parser2::Parser<ResultSuccessAndErrorsWrong, char, ws::parser2::error::EndOfFile> {
-    template<typename R> static ws::parser2::Result<int, ws::parser2::error::EndOfFile, int> parse(R reader) { return ws::parser2::success(reader.cursor, 1337); }
+struct ResultSuccessAndErrorsWrong : wsp::Parser<ResultSuccessAndErrorsWrong, char, wspe::EndOfFile> {
+    template<typename R> static wsp::Result<int, wspe::EndOfFile, int> parse(R reader) { return wsp::success(reader.cursor, 1337); }
 };
-static_assert(ws::parser2::details::is_parser_valid_v<StringReader, ResultSuccessAndErrorsWrong>);
+static_assert(wspd::is_parser_valid_v<BoundedReader, ResultSuccessAndErrorsWrong>);
 */
 /*
 //    static_assert(parser_details::false_v<R>, "The parse method should be static");
-struct ParseNotStatic : ws::parser2::Parser<ParseNotStatic, char, ws::parser2::error::EndOfFile> {
-    template<typename R> ws::parser2::Result<char, ws::parser2::error::EndOfFile> parse(R reader) { return ws::parser2::success(reader.cursor, '0'); }
+struct ParseNotStatic : wsp::Parser<ParseNotStatic, char, wspe::EndOfFile> {
+    template<typename R> wsp::Result<char, wspe::EndOfFile> parse(R reader) { return wsp::success(reader.cursor, '0'); }
 };
-static_assert(ws::parser2::details::is_parser_valid_v<StringReader, ParseNotStatic>);
+static_assert(wspd::is_parser_valid_v<BoundedReader, ParseNotStatic>);
 */
 /*
 //    static_assert(parser_details::false_v<P>, "The parse member is detected but doesn't seems like a static method, makes sure it has the signature: \ntemplate<typename Reader>\nstatic Result<T, Es...> parse(Reader reader)");
-struct ParseNotFunction : ws::parser2::Parser<ParseNotFunction, char, ws::parser2::error::EndOfFile> {
+struct ParseNotFunction : wsp::Parser<ParseNotFunction, char, wspe::EndOfFile> {
     template<typename R> R parse; 
 };
-static_assert(ws::parser2::details::is_parser_valid_v<StringReader, ParseNotFunction>);
+static_assert(wspd::is_parser_valid_v<BoundedReader, ParseNotFunction>);
 */
 /*
 //    static_assert(parser_details::false_v<R>, "The parse method should only have one argument, the reader (taken by value)");
-struct ParseWithMoreArg : ws::parser2::Parser<ParseWithMoreArg, char, ws::parser2::error::EndOfFile> {
-    template<typename R> static ws::parser2::Result<char, ws::parser2::error::EndOfFile> parse(R reader, int) { return ws::parser2::success(reader.cursor, '0'); }
+struct ParseWithMoreArg : wsp::Parser<ParseWithMoreArg, char, wspe::EndOfFile> {
+    template<typename R> static wsp::Result<char, wspe::EndOfFile> parse(R reader, int) { return wsp::success(reader.cursor, '0'); }
 };
-static_assert(ws::parser2::details::is_parser_valid_v<StringReader, ParseWithMoreArg>);
+static_assert(wspd::is_parser_valid_v<BoundedReader, ParseWithMoreArg>);
 */
 /*
 //    static_assert(parser_details::false_v<R>, "The parse method isn't detected, makes sure it has the signature: \ntemplate<typename Reader>\nstatic Result<T, Es...> parse(Reader reader)");
-struct Typo : ws::parser2::Parser<Typo, char, ws::parser2::error::EndOfFile> {
-    template<typename R> static ws::parser2::Result<char, ws::parser2::error::EndOfFile> parse_(R reader) { return ws::parser2::success(reader.cursor, '0'); }
+struct Typo : wsp::Parser<Typo, char, wspe::EndOfFile> {
+    template<typename R> static wsp::Result<char, wspe::EndOfFile> parse_(R reader) { return wsp::success(reader.cursor, '0'); }
 };
-static_assert(ws::parser2::details::is_parser_valid_v<StringReader, Typo>);
+static_assert(wspd::is_parser_valid_v<BoundedReader, Typo>);
 */
 /*
 //    static_assert(parser_details::false_v<P>, "The type you wants to validate doesn't inherit from Parser, to be more exact, the parser_type alias isn't a parser");
-struct ParserTypeNotParser : StringReader {
-    using parser_type = StringReader;
-    template<typename R> static ws::parser2::Result<char, ws::parser2::error::EndOfFile> parse(R reader) { return ws::parser2::success(reader.cursor, '0'); }
+struct ParserTypeNotParser : BoundedReader {
+    using parser_type = BoundedReader;
+    template<typename R> static wsp::Result<char, wspe::EndOfFile> parse(R reader) { return wsp::success(reader.cursor, '0'); }
 };
-static_assert(ws::parser2::details::is_parser_valid_v<StringReader, ParserTypeNotParser>);
+static_assert(wspd::is_parser_valid_v<BoundedReader, ParserTypeNotParser>);
 */
 /*
 //    static_assert(parser_details::false_v<P>, "The type you wants to validate doesn't inherit from Parser");
 struct NoBaseParser {
-    template<typename R> static ws::parser2::Result<char, ws::parser2::error::EndOfFile> parse(R reader) { return ws::parser2::success(reader.cursor, '0'); }
+    template<typename R> static wsp::Result<char, wspe::EndOfFile> parse(R reader) { return wsp::success(reader.cursor, '0'); }
 };
-static_assert(ws::parser2::details::is_parser_valid_v<StringReader, NoBaseParser>);
+static_assert(wspd::is_parser_valid_v<BoundedReader, NoBaseParser>);
 */
 
 int main() {
@@ -203,58 +297,81 @@ int main() {
         "Simple Next",
         "something",
         's',
-        ws::parser2::nextc
+        wsp::nextc
     );
 
     test_err(
         "Next with EOF",
         "",
-        ws::parser2::error::EndOfFile{},
-        ws::parser2::nextc
+        wspe::EndOfFile{},
+        wsp::nextc
     );
 
     test(
         "Optional Next",
         "something",
-        ws::parser2::Maybe<char>{ 's' },
-        ws::parser2::opt<ws::parser2::nextc>
+        wsp::Maybe<char>{ 's' },
+        wsp::opt<wsp::nextc>
     );
 
     test(
         "Optional Next with EOF",
         "",
-        ws::parser2::Maybe<char>{},
-        ws::parser2::opt<ws::parser2::nextc>
+        wsp::Maybe<char>{},
+        wsp::opt<wsp::nextc>
     );
 
     test(
         "Double Next",
         "something",
-        ws::parser2::Product('s', 'o'),
-        ws::parser2::seq<ws::parser2::nextc, ws::parser2::nextc>
+        wsp::Product('s', 'o'),
+        wsp::seq<wsp::nextc, wsp::nextc>
     );
 
     test_err(
         "Seq, first error",
         "",
-        ws::parser2::error::EndOfFile{},
-        ws::parser2::seq<ws::parser2::nextc, ws::parser2::nextc>
+        wspe::EndOfFile{},
+        wsp::seq<wsp::nextc, wsp::nextc>
     );
 
     test_err(
         "Seq, second error",
         "s",
-        ws::parser2::error::EndOfFile{},
-        ws::parser2::seq<ws::parser2::nextc, ws::parser2::nextc>
+        wspe::EndOfFile{},
+        wsp::seq<wsp::nextc, wsp::nextc>
+    );
+
+    test(
+        "Match 's'",
+        "something",
+        's',
+        Match<'s'>{}
+    );
+
+    test_err(
+        "Match 's' on EOF",
+        "",
+        wspe::EndOfFile{},
+        Match<'s'>{}
+    );
+
+    test_err(
+        "No Match 's'",
+        "a",
+        NotMatching<'s'>{},
+        Match<'s'>{}
     );
 
     static_assert(
-        ws::parser2::details::is_parser_valid_v<StringReader, ws::parser2::NextC> &&
-        ws::parser2::details::is_parser_valid_v<StringReader, ws::parser2::Opt<ws::parser2::NextC>> &&
-        ws::parser2::details::is_parser_valid_v<StringReader, ws::parser2::Seq<ws::parser2::NextC, ws::parser2::NextC>> &&
-        ws::parser2::details::is_parser_valid_v<StringReader, ws::parser2::Opt<ws::parser2::Opt<ws::parser2::NextC>>> &&
-        ws::parser2::details::is_parser_valid_v<StringReader, ws::parser2::Seq<ws::parser2::Seq<ws::parser2::NextC, ws::parser2::NextC>, ws::parser2::NextC>> &&
-        ws::parser2::details::is_parser_valid_v<StringReader, ws::parser2::Seq<ws::parser2::Opt<ws::parser2::NextC>, ws::parser2::Seq<ws::parser2::NextC, ws::parser2::NextC>>> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::NextC> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::Opt<wsp::NextC>> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::Seq<wsp::NextC, wsp::NextC>> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::Opt<wsp::Opt<wsp::NextC>>> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::Seq<wsp::Seq<wsp::NextC, wsp::NextC>, wsp::NextC>> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::Seq<wsp::Opt<wsp::NextC>, wsp::Seq<wsp::NextC, wsp::NextC>>> &&
+        wspd::is_parser_valid_v<BoundedReader, Match<'a'>> &&
+        //wspd::is_parser_valid_v<BoundedReader, wsp::First<Match<'a'>, wsp::NextC>> &&
         true, 
         "Something is wrong...");
 

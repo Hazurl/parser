@@ -20,10 +20,10 @@ struct Opt : Parser<Opt<P>, Maybe<details::parsed_type_t<P>>> {
         auto res = P::parse(reader);
 
         if (res.is_error()) {
-            return success(reader.cursor, std::nullopt);
+            return success(reader.cursor(), std::nullopt);
         }
 
-        return success(reader.cursor, std::move(res.success()));
+        return success(reader.cursor(), std::move(res.success()));
     }
 
 };
