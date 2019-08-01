@@ -64,9 +64,9 @@ struct BoundedReader {
 
 private:
 
-    char const* const begin;
-    char const* const end;
-    std::size_t index;
+    char const* const begin{ nullptr };
+    char const* const end{ nullptr };
+    std::size_t index{ 0 };
 
 };
 /*

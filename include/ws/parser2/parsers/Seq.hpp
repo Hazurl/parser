@@ -28,7 +28,6 @@ private:
 
     static_assert((true && ... && details::is_parser_soft_check_v<Ps>), "Seq requires parser-only parameters");
 
-    using tmp_tuple_t = std::tuple<std::optional<details::parsed_type_t<Ps>>...>;
     using product_t = Product<details::parsed_type_t<Ps>...>;
     using result_t = details::result_type_t<Seq<Ps...>>;
     //details::list_to_t<details::push_t<Product<details::parsed_type_t<Ps>...>, details::flatten_unique_t<details::List<details::list_from_errors_t<details::result_type_t<Ps>>...>>>, Result>;
@@ -39,42 +38,41 @@ public:
 
     template<typename R>
     static result_t parse(R reader) {
-        tmp_tuple_t tmp_res;
-        return parse_at<0>(tmp_res, reader);
+        return parse_at<0>(reader);
     }
 
 private:
 
-    template<std::size_t I, typename R>
-    static result_t parse_at(tmp_tuple_t& tmp_res, R reader) {
-        if constexpr (I < sizeof...(Ps)) {
-            using P = details::at_t<details::List<Ps...>, I>;
-            auto res = P::parse(reader);
+    template<std::size_t I, typename R, typename...Rs>
+    static std::enable_if_t<(I >= sizeof...(Ps)), result_t> 
+    parse_at(R reader, Rs&&... rs) {
+        return success(reader.cursor(), std::move(rs)...);
+    }
 
-            return std::visit([&tmp_res, reader, &res] (auto&& err) -> details::result_type_t<Seq<Ps...>> {
-                using Err = std::decay_t<decltype(err)>;
+    template<std::size_t I, typename R, typename...Rs>
+    static std::enable_if_t<(I < sizeof...(Ps)), result_t> 
+    parse_at(R reader, Rs&&... rs) {
+        using P = details::at_t<details::List<Ps...>, I>;
+        auto result = P::parse(reader);
 
-                if constexpr (std::is_same_v<Success<details::parsed_type_t<P>>, Err>) {
-
-                    std::get<I>(tmp_res) = std::move(err.value);
-                    return Seq<Ps...>::parse_at<I+1>(tmp_res, R::copy_move(reader, 1));
-
-                } else {
-
-                    return fail<Err>(reader.cursor(), std::move(err));
-                }
-            }, res.value);
-        } else {
-            return success(reader.cursor(), transform_tmp_tuple(tmp_res, std::make_index_sequence<sizeof...(Ps)>{}));
+        if constexpr (P::can_fail) {
+            if(result.is_error()) {
+                return std::visit([cursor = result.cursor] (auto&& e) -> result_t {
+                    return fail<std::decay_t<decltype(e)>>(cursor, std::move(e));
+                }, std::move(result).errors());
+            }
         }
+
+        std::cout << "Before [" << reader.cursor() << "] => After [" << result.cursor << "]\n";
+
+        return parse_at<I+1>(
+            R::from_cursor(std::move(reader), result.cursor), 
+            std::move(rs)..., 
+            std::move(std::move(result.success()))
+        );
+
     }
 
-    template<std::size_t...Is>
-    static product_t transform_tmp_tuple(tmp_tuple_t& tmp, std::index_sequence<Is...>) {
-        return product_t(
-            std::move(*std::get<Is>(tmp))...
-        );
-    }
 
 };
 

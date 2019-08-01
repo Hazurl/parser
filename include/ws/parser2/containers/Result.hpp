@@ -14,7 +14,7 @@ namespace ws::parser2 {
 template<typename S>
 struct Success { 
     using type = S;
-    
+
     template<typename...Args>
     Success(Args&&...args) : value(std::forward<Args>(args)...) {}
     
@@ -63,7 +63,7 @@ namespace  {
 
 template<typename S, typename...Es>
 struct Result {
-    std::size_t cursor;
+    std::size_t cursor{ 0 };
     std::variant<Success<S>, Es...> value;
 
     template<std::size_t I, typename...Args>
@@ -100,6 +100,20 @@ struct Result {
             return std::holds_alternative<E>(value);
         }
 
+    }
+
+    std::variant<Es...> errors() const& {
+        return std::visit(details::Visitor{
+            [] (Success<S> const&) -> std::variant<Es...> { throw std::bad_variant_access{}; },
+            [] (auto const& e) { return std::variant<Es...>{ e }; }
+        }, value);
+    }
+
+    std::variant<Es...> errors() && {
+        return std::visit(details::Visitor{
+            [] (Success<S>&&) -> std::variant<Es...> { throw std::bad_variant_access{}; },
+            [] (auto&& e) { return std::variant<Es...>{ std::move(e) }; }
+        }, std::move(value));
     }
 
     auto& success() & {

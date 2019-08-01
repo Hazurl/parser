@@ -4,6 +4,8 @@
 #include <ws/parser2/Details.hpp>
 #include <ws/parser2/parsers/Errors.hpp>
 
+#include <cassert>
+
 namespace ws::parser2 {
 
 /*
@@ -21,7 +23,7 @@ struct Next : Parser<Next<C>, C, error::EndOfFile> {
             return fail<error::EndOfFile>(reader.cursor());
         }
 
-        return success(reader.cursor(), reader.peek());
+        return success(reader.cursor() + 1, reader.peek());
     }
 
 };
