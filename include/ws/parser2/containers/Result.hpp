@@ -80,13 +80,6 @@ struct Result {
 
     static constexpr bool can_fail{ sizeof...(Es) > 0 };
 
-    std::string what() const {
-        return std::visit(details::Visitor{
-            [] (Success<S> const&) { return std::string{}; },
-            [] (auto const& e) { return e.what(); }
-        }, value);
-    }
-
     bool is_success() const {
         return std::holds_alternative<Success<S>>(value);
     }
@@ -146,6 +139,20 @@ struct Result {
 };
 
 
+
+
+/*
+    Describe
+ */
+template<typename S, typename...Es>
+struct Describe<Result<S, Es...>> {
+    std::string operator()(Result<S, Es...> const& res) {
+        return std::visit(details::Visitor{
+            [] (Success<S> const& s) { return describe(s.value); },
+            [] (auto const& e) { return describe(e); }
+        }, res.value);
+    }
+};
 
 
 

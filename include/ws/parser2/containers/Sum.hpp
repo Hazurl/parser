@@ -33,10 +33,26 @@ template<typename...Ts> Sum(from_variant_t, std::variant<Ts...>) -> Sum<Ts...>;
 template<typename...Ts>
 std::ostream& operator <<(std::ostream& os, Sum<Ts...> const& sum) {
     os << "(#" << sum.index() << ": "; 
-    std::visit([&os] (auto const& v) { os << v; }, sum); 
+    std::visit([&os] (auto const& v) { os << v; }, static_cast<std::variant<Ts...> const&>(sum)); 
     return os << ")";
 }
 
+
+
+
+
+
+/*
+    Describe
+ */
+
+template<typename...Ts>
+struct Describe<Sum<Ts...>> {
+    std::string operator()(Sum<Ts...> const& sum) {
+        auto const& variant = static_cast<std::variant<Ts...> const&>(sum);
+        return "[#" + std::to_string(variant.index()) + ": " + std::visit([] (auto const& v) { return describe(v); }, variant) + "]";
+    }
+};
 
 
 
@@ -64,7 +80,7 @@ bool operator ==(Sum<Ts...> const& lhs, Sum<Ts...> const& rhs) {
                 return false; 
             }
         }
-    , lhs, rhs);
+    , static_cast<std::variant<Ts...> const&>(lhs), static_cast<std::variant<Ts...> const&>(rhs));
 }
 
 }

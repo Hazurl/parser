@@ -47,6 +47,23 @@ template<typename...Ts> Product(from_tuple_t, std::tuple<Ts...>) -> Product<Ts..
 
 
 /*
+    Describe
+ */
+
+template<typename...Ts>
+struct Describe<Product<Ts...>> {
+    std::string operator()(Product<Ts...> const& prod) {
+        return std::apply([] (auto const&...ts) {
+            return (std::string{ "(" } + ... + describe(ts)) + ")";
+        }, static_cast<std::tuple<Ts...> const&>(prod));
+    }
+};
+
+
+
+
+
+/*
     Operator <<
  */
 

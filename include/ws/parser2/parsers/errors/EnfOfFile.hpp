@@ -3,6 +3,8 @@
 #include <string>
 #include <ostream>
 
+#include <ws/parser2/details/Describe.hpp>
+
 namespace ws::parser2::error {
 
 /*
@@ -14,7 +16,6 @@ struct EndOfFile {
         return "End of file reached!";
     }
 };
-
 
 
 
@@ -38,5 +39,27 @@ std::ostream& operator <<(std::ostream& os, EndOfFile) {
 bool operator ==(EndOfFile, EndOfFile) {
     return true;
 }
+
+}
+
+namespace ws::parser2 {
+
+
+
+
+
+/*
+    Describe
+ */
+
+template<>
+struct Describe<error::EndOfFile> {
+    std::string operator()(error::EndOfFile const&) {
+        return "End of file reached!";
+    }
+};
+
+
+
 
 }

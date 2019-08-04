@@ -113,7 +113,7 @@ void test(char const* message, char const (&input)[N], R expected, P) {
             ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
             " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
             ", expected ", ws::module::style::bold, ws::module::colour::fg::green, "[", expected, "]", ws::module::style::reset,
-            " but got ", ws::module::style::bold, ws::module::colour::fg::red, "[", res.what(), "]", ws::module::style::reset);
+            " but got ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(res), "]", ws::module::style::reset);
         return;
     }
 
@@ -153,7 +153,7 @@ void test_err(char const* message, char const (&input)[N], E error, P) {
             ws::module::style::bold, "[", message, "]", ws::module::style::reset, "]", 
             " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
             ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
-            " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", res.what(), "]", ws::module::style::reset);
+            " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(res), "]", ws::module::style::reset);
         return;
     }
 
@@ -173,11 +173,16 @@ void test_err(char const* message, char const (&input)[N], E error, P) {
 }
 
 template<char c>
-struct NotMatching {
-    std::string what() const {
+struct NotMatching {};
+
+namespace ws::parser2 {
+template<char c>
+struct Describe<NotMatching<c>> {
+    std::string operator()(NotMatching<c> const&) {
         return "Not matching '" + std::string(1, c) + "' (" + std::to_string(static_cast<int>(c)) + ")";
     }
 };
+}
 
 template<char c>
 std::ostream& operator <<(std::ostream& os, NotMatching<c>) {
@@ -361,6 +366,34 @@ int main() {
         "a",
         NotMatching<'s'>{},
         Match<'s'>{}
+    );
+
+    test(
+        "Match 's' after 'a' failed",
+        "something",
+        wsp::Sum<char>('s'),
+        wsp::First<Match<'a'>, Match<'s'>>{}
+    );
+
+    test(
+        "Match 's' before 'a' failed",
+        "something",
+        wsp::Sum<char>('s'),
+        wsp::First<Match<'s'>, Match<'a'>>{}
+    );
+
+    test(
+        "Match 's' before `nextc` works",
+        "something",
+        wsp::Sum<char>('s'),
+        wsp::First<Match<'s'>, wsp::NextC>{}
+    );
+
+    test_err(
+        "No Match 's' and 'a'",
+        "foo",
+        wsp::Product<wsp::Sum<NotMatching<'s'>, wspe::EndOfFile>, wsp::Sum<NotMatching<'a'>, wspe::EndOfFile>>{},
+        wsp::First<Match<'s'>, Match<'a'>>{}
     );
 
     static_assert(

@@ -64,7 +64,7 @@ private:
         if constexpr (P::can_fail) {
             if(result.is_error()) {
                 return parse_at<I+1>(
-                    R::from_cursor(std::move(reader), result.cursor), 
+                    reader, 
                     std::move(rs)..., 
                     Sum(from_variant_t{}, std::move(result).errors())
                 );
