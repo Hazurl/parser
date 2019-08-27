@@ -3,7 +3,7 @@
 #include <optional>
 #include <sstream>
 
-#include <module/module.h>
+#include <logger/logger.h>
 #include <json.hpp>
 #include <ws/parser/Parser.hpp>
 #include <ws/parser/token/TokenParser.hpp>

@@ -9,7 +9,7 @@
 #include <ws/parser/token/TokenStream.hpp>
 #include <ws/parser/token/Token.hpp>
 
-#include <module/module.h>
+#include <logger/logger.h>
 
 namespace ws::parser {
 

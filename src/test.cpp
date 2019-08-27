@@ -5,7 +5,7 @@
 #include <cmath>
 #include <random>
 
-#include <module/module.h>
+#include <logger/logger.h>
 #include <ws/parser/Parser.hpp>
 #include <ws/parser/token/Token.hpp>
 

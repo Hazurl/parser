@@ -6,7 +6,7 @@
 #include <ws/parser/ast/Number.hpp>
 #include <ws/parser/ast/BinaryOperator.hpp>
 #include <ws/parser/ast/UnaryOperator.hpp>
-#include <module/module.h>
+#include <logger/logger.h>
 
 namespace ws::parser {
 

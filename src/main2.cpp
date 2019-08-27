@@ -7,7 +7,7 @@
 #include <experimental/type_traits>
 #include <cassert>
 
-#include <module/module.h>
+#include <logger/logger.h>
 #include <json.hpp>
 #include <ws/parser2/Parsers.hpp>
 #include <ws/parser2/Containers.hpp>
