@@ -1,6 +1,7 @@
 #pragma once
 
 #include <type_traits>
+#include <variant>
 #include <experimental/type_traits>
 
 #include <ws/parser2/containers/Parser.hpp>
@@ -115,9 +116,9 @@ struct ValidateResult {
 };
 
 /* All good */
-template<typename T, typename...Es>
-struct ValidateResult<Result<T, Es...>, T, Es...> {
-    parser_details::TypePrinter<T, Es...> _;
+template<typename T, typename E>
+struct ValidateResult<Result<T, E>, T, E> {
+    parser_details::TypePrinter<T, E> _;
     static constexpr bool value = true;
 };
 

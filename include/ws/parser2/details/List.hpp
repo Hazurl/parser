@@ -145,9 +145,9 @@ struct ListFrom<M, M<Ts...>> {
 template<typename R>
 struct ErrorToList {};
 
-template<typename S, typename...Es>
-struct ErrorToList<Result<S, Es...>> {
-    using type = List<Es...>;
+template<typename S, typename E>
+struct ErrorToList<Result<S, E>> {
+    using type = std::conditional_t<Result<S, E>::can_fail, List<E>, List<>>;
 };
 
 template<typename L, template<typename...>typename M>
@@ -213,7 +213,8 @@ using at_t = typename At<L, I>::type;
 
 
 /*
-    Flatten the list of lists `L` and removes and
+    Flatten once the list of lists `L`
+    `flatten_unique_t` removes the duplicate
  */
 template<template<typename A, typename B> typename P, typename F, typename L>
 struct FlattenWith {};
@@ -224,7 +225,9 @@ struct FlattenWith<P, F, List<>> {
 };
 
 template<template<typename A, typename B> typename P, typename F, typename T, typename...Ts>
-struct FlattenWith<P, F, List<T, Ts...>> : FlattenWith<P, P<T, F>, List<Ts...>> {};
+struct FlattenWith<P, F, List<T, Ts...>> {
+    using type = P<T, typename FlattenWith<P, F, List<Ts...>>::type>;
+};
 
 template<typename L>
 using flatten_t = typename FlattenWith<concatenate_t, List<>, L>::type;
@@ -251,6 +254,9 @@ struct Length<List<Ts...>> {
 
 template<typename L>
 constexpr std::size_t length_v = Length<L>::value;
+
+template<typename L>
+constexpr bool is_empty_v = length_v<L> <= 0;
 
 
 
@@ -284,5 +290,120 @@ using map_t = typename Map<M, L>::type;
  */
 template<typename L>
 using set_t = flatten_unique_t<map_t<List, L>>;
+
+
+
+
+
+
+
+
+/*
+    Filter out `E` from the list `L`
+ */
+template<typename E, typename L>
+struct FilterOut {};
+
+template<typename E>
+struct FilterOut<E, List<>> { 
+    using type = List <>; 
+};
+
+template<typename E, typename T, typename...Ts>
+struct FilterOut<E, List<T, Ts...>> {
+    using type = push_t<T, typename FilterOut<E, List<Ts...>>::type>;
+};
+
+template<typename E, typename...Ts>
+struct FilterOut<E, List<E, Ts...>> : FilterOut<E, List<Ts...>> {};
+
+template<typename E, typename L>
+using filter_out_t = typename FilterOut<E, L>::type;
+
+
+
+
+
+
+
+
+/*
+    Takes elements while the predicate is true
+ */
+
+template<template<typename> typename P, typename L>
+struct TakeWhile {};
+
+template<template<typename> typename P>
+struct TakeWhile<P, List<>> {
+    using type = List<>;
+};
+
+template<template<typename> typename P, typename T, typename...Ts>
+struct TakeWhile<P, List<T, Ts...>> {
+    using type = std::conditional_t<
+        P<T>::value, 
+        push_t<T, typename TakeWhile<P, List<Ts...>>::type>,
+        List<>
+    >;
+};
+
+template<template<typename> typename P, typename L>
+using take_while_t = typename TakeWhile<P, L>::type;
+
+
+
+
+
+
+
+
+/*
+    Takes `N` elements from the list `L`
+ */
+
+template<std::size_t N, typename L>
+struct TakeN{};
+
+template<std::size_t N>
+struct TakeN<N, List<>> {
+    using type = List<>;
+};
+
+template<typename L>
+struct TakeN<0, L> {
+    using type = List<>;
+};
+
+template<std::size_t N, typename T, typename...Ts>
+struct TakeN<N, List<T, Ts...>> {
+    using type = push_t<T, typename TakeN<N-1, List<Ts...>>::type>;
+};
+
+template<std::size_t N, typename L>
+using take_n_t = typename TakeN<N, L>::type;
+
+
+
+
+
+
+
+
+/*
+    Is the type `T` of the form `C<...>`
+ */
+template<typename T, template<typename...> typename C>
+struct IsSameHKType {
+    static inline constexpr bool value { false };
+};
+
+template<typename...Ts, template<typename...> typename C>
+struct IsSameHKType<C<Ts...>, C> {
+    static inline constexpr bool value { true };
+};
+
+template<typename T, template<typename...> typename C>
+inline constexpr bool is_same_HK_type_t = IsSameHKType<T, C>::value;
 
 }

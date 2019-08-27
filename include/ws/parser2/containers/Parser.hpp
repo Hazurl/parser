@@ -13,11 +13,11 @@ struct Transformer;
     Product type
  */
 
-template<typename P, typename T, typename...Es>
+template<typename P, typename T, typename E = void>
 struct Parser {
     using parsed_type = T;
-    using result_type = Result<T, Es...>;
-    using parser_type = Parser<P, T, Es...>;
+    using result_type = Result<T, E>;
+    using parser_type = Parser<P, T, E>;
 
     static constexpr bool can_fail{ result_type::can_fail };
 

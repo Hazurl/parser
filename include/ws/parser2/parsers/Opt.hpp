@@ -14,7 +14,7 @@ namespace ws::parser2 {
  */
 
 template<typename P, std::enable_if_t<details::is_parser_soft_check_v<P>, int> = 1337>
-struct Opt : Parser<Opt<P>, Maybe<details::parsed_type_t<P>>> {
+struct Opt : Parser<Opt<P>, Maybe<details::parsed_type_t<P>> > {
     template<typename R>
     static details::result_type_t<Opt<P>> parse(R reader) {
         auto res = P::parse(reader);
@@ -23,7 +23,7 @@ struct Opt : Parser<Opt<P>, Maybe<details::parsed_type_t<P>>> {
             return success(reader.cursor(), std::nullopt);
         }
 
-        return success(reader.cursor(), std::move(res.success()));
+        return success(res.cursor(), std::move(res.success()));
     }
 
 };

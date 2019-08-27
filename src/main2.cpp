@@ -148,24 +148,37 @@ void test_err(char const* message, char const (&input)[N], E error, P) {
         return;
     }
 
-    if (!res.template is_error<E>()) {
-        ws::module::errorln(
-            ws::module::style::bold, "[", message, "]", ws::module::style::reset, "]", 
-            " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
-            ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
-            " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(res), "]", ws::module::style::reset);
-        return;
+    auto& value = res.template error(); 
+
+    if constexpr (wspd::is_same_HK_type_t<wspd::error_of_t<wspd::result_type_t<P>>, wsp::Sum>) {
+        if (res.template is_error() && !std::holds_alternative<E>(res.error())) {
+            ws::module::errorln(
+                ws::module::style::bold, "[", message, "]", ws::module::style::reset, "]", 
+                " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
+                ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
+                " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(res), "]", ws::module::style::reset);
+            return;
+        }
+
+        if (!(std::get<E>(value) == error)) {
+            ws::module::errorln(
+                ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
+                " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
+                ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
+                " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", value, "]", ws::module::style::reset);
+            return;
+        }
+    } else {
+        if (!(value == error)) {
+            ws::module::errorln(
+                ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
+                " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
+                ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
+                " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", value, "]", ws::module::style::reset);
+            return;
+        }
     }
 
-    auto& value = res.template error<E>(); 
-    if (!(value == error)) {
-        ws::module::errorln(
-            ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
-            " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
-            ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
-            " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", value, "]", ws::module::style::reset);
-        return;
-    }
 
     ws::module::successln(
         ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
@@ -196,19 +209,19 @@ bool operator ==(NotMatching<c>, NotMatching<c>) {
 
 
 template<char c>
-struct Match : wsp::Parser<Match<c>, char, NotMatching<c>, wspe::EndOfFile> {
+struct Match : wsp::Parser<Match<c>, char, wsp::Sum<NotMatching<c>, wspe::EndOfFile>> {
     template<typename R> 
     static wspd::result_type_t<Match<c>> parse(R reader) {
         auto res = wsp::NextC::parse(reader);
         if (res.is_success()) {
             if (res.success() == c) {
-                return wsp::success(res.cursor, res.success());
+                return wsp::success(res.cursor(), res.success());
             }
 
-            return wsp::fail<NotMatching<c>>(res.cursor);
+            return wsp::fail(res.cursor(), NotMatching<c>{});
         }
 
-        return wsp::fail<wspe::EndOfFile>(res.cursor);
+        return wsp::fail(res.cursor(), wspe::EndOfFile{});
     }
 };
 
@@ -392,10 +405,14 @@ int main() {
     test_err(
         "No Match 's' and 'a'",
         "foo",
-        wsp::Product<wsp::Sum<NotMatching<'s'>, wspe::EndOfFile>, wsp::Sum<NotMatching<'a'>, wspe::EndOfFile>>{},
+        wsp::Product<wsp::Sum<NotMatching<'s'>, wspe::EndOfFile>, wsp::Sum<NotMatching<'a'>, wspe::EndOfFile>>(),
         wsp::First<Match<'s'>, Match<'a'>>{}
     );
+/*
+    debug_t<
 
+    > _;
+*/
     static_assert(
         wspd::is_parser_valid_v<BoundedReader, wsp::NextC> &&
         wspd::is_parser_valid_v<BoundedReader, wsp::Opt<wsp::NextC>> &&

@@ -12,9 +12,9 @@ namespace ws::parser2::details {
 template<typename S, typename R>
 struct SetSuccess {};
 
-template<typename S, typename S_, typename...Es>
-struct SetSuccess<S, Result<S_, Es...>> {
-    using type = Result<S, Es...>;
+template<typename S, typename S_, typename E>
+struct SetSuccess<S, Result<S_, E>> {
+    using type = Result<S, E>;
 };
 
 template<typename S, typename R>
@@ -23,13 +23,25 @@ using set_success_t = typename SetSuccess<S, R>::type;
 template<typename R>
 struct SuccessOf {};
 
-template<typename S, typename...Es>
-struct SuccessOf<Result<S, Es...>> { 
+template<typename S, typename E>
+struct SuccessOf<Result<S, E>> { 
     using type = S;
 };
 
 template<typename R>
 using success_of_t = typename SuccessOf<R>::type;
+
+template<typename R>
+struct ErrorOf {};
+
+template<typename S, typename E>
+struct ErrorOf<Result<S, E>> { 
+    using type = E;
+};
+
+template<typename R>
+using error_of_t = typename ErrorOf<R>::type;
+
 
 }
 
@@ -48,7 +60,7 @@ decltype(auto) success(std::size_t cursor, Args&&...args) {
     return ResultBuilder{ [args = std::make_tuple(cursor, std::forward<Args>(args)...)] (auto r) { 
         using T = typename decltype(r)::type;
         return std::apply([] (auto&&... args) { 
-            return T(std::in_place_index_t<0>{}, std::forward<decltype(args)>(args)...); 
+            return T(success_tag, std::forward<decltype(args)>(args)...); 
         }, args); 
     }};
 }
@@ -62,17 +74,13 @@ decltype(auto) success(std::size_t cursor, Args&&...args) {
     fail function
     -- used to create a Result with any success and errors
  */
-template<typename E, typename...Args>
+template<typename...Args>
 decltype(auto) fail(std::size_t cursor, Args&&...args) {
     return ResultBuilder{ [args = std::make_tuple(cursor, std::forward<Args>(args)...)] (auto r) { 
         using T = typename decltype(r)::type;
-        using L = details::list_from_errors_t<T>;
-        static_assert(details::is_in_v<E, L>, "Failure type mismatch, error isn't in the result");
-        /* index 0 is the success type, errors starts at 1 */
-        static constexpr std::size_t error_index =  details::index_of_v<L, E> + 1;
 
         return std::apply([] (auto&&... args) { 
-            return T(std::in_place_index_t<error_index>{}, std::forward<decltype(args)>(args)...); 
+            return T(error_tag, std::forward<decltype(args)>(args)...); 
         }, args); 
     }};
 }

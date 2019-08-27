@@ -20,7 +20,7 @@ struct Next : Parser<Next<C>, C, error::EndOfFile> {
     template<typename R>
     static Result<C, error::EndOfFile> parse(R reader) {
         if (reader.is_end()) {
-            return fail<error::EndOfFile>(reader.cursor());
+            return fail(reader.cursor());
         }
 
         return success(reader.cursor() + 1, reader.peek());

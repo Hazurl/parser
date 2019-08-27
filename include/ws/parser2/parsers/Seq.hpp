@@ -18,10 +18,27 @@ struct Show;
 
 template<typename...Ps>
 struct Seq : std::enable_if_t<(true && ... && details::is_parser_soft_check_v<Ps>), 
-    details::parser_from_list_t<
-        Seq<Ps...>, 
-        Product<details::parsed_type_t<Ps>...>, 
-        details::flatten_unique_t<details::List<details::list_from_errors_t<details::result_type_t<Ps>>...>>
+    std::conditional_t<
+        details::is_empty_v<details::flatten_unique_t<details::List<details::list_from_errors_t<details::result_type_t<Ps>>...>>>,
+        Parser<
+            Seq<Ps...>, 
+            Product<details::parsed_type_t<Ps>...>
+        >,
+        Parser<
+            Seq<Ps...>, 
+            Product<details::parsed_type_t<Ps>...>, 
+            details::list_to_t<
+                details::flatten_unique_t<
+                    details::List<
+                        details::list_from_errors_t<
+                            details::result_type_t<Ps>
+                        >
+                        ...
+                    >
+                >
+                , Sum
+            > 
+        >
     >> {
 
 private:
@@ -30,9 +47,6 @@ private:
 
     using product_t = Product<details::parsed_type_t<Ps>...>;
     using result_t = details::result_type_t<Seq<Ps...>>;
-    //details::list_to_t<details::push_t<Product<details::parsed_type_t<Ps>...>, details::flatten_unique_t<details::List<details::list_from_errors_t<details::result_type_t<Ps>>...>>>, Result>;
-
-    //Show<tmp_tuple_t, product_t, result_t> ___;
 
 public:
 
@@ -57,16 +71,14 @@ private:
 
         if constexpr (P::can_fail) {
             if(result.is_error()) {
-                return std::visit([cursor = result.cursor] (auto&& e) -> result_t {
-                    return fail<std::decay_t<decltype(e)>>(cursor, std::move(e));
-                }, std::move(result).errors());
+                return fail(reader.cursor(), std::move(result).error());
             }
         }
 
         return parse_at<I+1>(
-            R::from_cursor(std::move(reader), result.cursor), 
+            R::from_cursor(std::move(reader), result.cursor()), 
             std::move(rs)..., 
-            std::move(std::move(result.success()))
+            std::move(result).success()
         );
 
     }

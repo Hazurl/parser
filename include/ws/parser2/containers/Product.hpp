@@ -38,6 +38,12 @@ struct Product : std::tuple<Ts...> {
     Product(from_tuple_t, std::tuple<Ts...> ts) : std::tuple<Ts...>(ts) {};
 };
 
+template<>
+struct Product<> : std::tuple<> {
+    Product() = default;
+    Product(from_tuple_t, std::tuple<> ts) : std::tuple<>(ts) {};
+};
+
 template<typename...Ts> Product(Ts...) -> Product<Ts...>;
 template<typename...Ts> Product(from_tuple_t, std::tuple<Ts...>) -> Product<Ts...>;
 
