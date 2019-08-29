@@ -225,6 +225,8 @@ struct Match : wsp::Parser<Match<c>, char, wsp::Sum<NotMatching<c>, wspe::EndOfF
     }
 };
 
+template<char c>
+constexpr Match<c> match;
 
 /*
 
@@ -367,49 +369,49 @@ int main() {
         "Match 's'",
         "something",
         's',
-        Match<'s'>{}
+        match<'s'>
     );
 
     test_err(
         "Match 's' on EOF",
         "",
         wspe::EndOfFile{},
-        Match<'s'>{}
+        match<'s'>
     );
 
     test_err(
         "No Match 's'",
         "a",
         NotMatching<'s'>{},
-        Match<'s'>{}
+        match<'s'>
     );
 
     test(
         "Match 's' after 'a' failed",
         "something",
         wsp::Sum<char>('s'),
-        wsp::First<Match<'a'>, Match<'s'>>{}
+        wsp::first<match<'a'>, match<'s'>>
     );
 
     test(
         "Match 's' before 'a' failed",
         "something",
         wsp::Sum<char>('s'),
-        wsp::First<Match<'s'>, Match<'a'>>{}
+        wsp::first<match<'s'>, match<'a'>>
     );
 
     test(
         "Match 's' before `nextc` works",
         "something",
         wsp::Sum<char>('s'),
-        wsp::First<Match<'s'>, wsp::NextC>{}
+        wsp::first<match<'s'>, wsp::nextc>
     );
 
     test_err(
         "No Match 's' and 'a'",
         "foo",
         wsp::Product<wsp::Sum<NotMatching<'s'>, wspe::EndOfFile>, wsp::Sum<NotMatching<'a'>, wspe::EndOfFile>>(),
-        wsp::First<Match<'s'>, Match<'a'>>{}
+        wsp::first<match<'s'>, match<'a'>>
     );
 
     test(
