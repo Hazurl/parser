@@ -310,6 +310,9 @@ struct NoBaseParser {
 static_assert(wspd::is_parser_valid_v<BoundedReader, NoBaseParser>);
 */
 
+int char_to_int(char c) { return static_cast<int>(c); }
+char default_maybe(wsp::Maybe<char>&& m) { return m.value_or(' '); };
+
 int main() {
     test(
         "Simple Next",
@@ -408,6 +411,27 @@ int main() {
         wsp::Product<wsp::Sum<NotMatching<'s'>, wspe::EndOfFile>, wsp::Sum<NotMatching<'a'>, wspe::EndOfFile>>(),
         wsp::First<Match<'s'>, Match<'a'>>{}
     );
+
+    test(
+        "Simple Next with transformer",
+        "something",
+        char_to_int('s'),
+        wsp::nextc [ wsp::lift<char_to_int> ]
+    );
+
+    test_err(
+        "Next with transformer on EOF",
+        "",
+        wspe::EndOfFile{},
+        wsp::nextc [ wsp::lift<char_to_int> ]
+    );
+
+    test(
+        "Match 's'",
+        "something",
+        's',
+        Match<'s'>{} [ wsp::lift<default_maybe> ]
+    );
 /*
     debug_t<
 
@@ -422,6 +446,7 @@ int main() {
         wspd::is_parser_valid_v<BoundedReader, wsp::Seq<wsp::Opt<wsp::NextC>, wsp::Seq<wsp::NextC, wsp::NextC>>> &&
         wspd::is_parser_valid_v<BoundedReader, Match<'a'>> &&
         wspd::is_parser_valid_v<BoundedReader, wsp::First<Match<'a'>, wsp::NextC>> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::Transformer<wsp::NextC, char_to_int>> &&
         true, 
         "Something is wrong...");
 
