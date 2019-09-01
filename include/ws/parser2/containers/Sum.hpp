@@ -33,9 +33,9 @@ template<typename...Ts> Sum(from_variant_t, std::variant<Ts...>) -> Sum<Ts...>;
 
 template<typename...Ts>
 std::ostream& operator <<(std::ostream& os, Sum<Ts...> const& sum) {
-    os << "(#" << sum.index() << ": "; 
+    os << "[#" << sum.index() << ": "; 
     std::visit([&os] (auto const& v) { os << v; }, static_cast<std::variant<Ts...> const&>(sum)); 
-    return os << ")";
+    return os << "]";
 }
 
 

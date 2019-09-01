@@ -8,7 +8,7 @@
 namespace ws::parser2::details {
 
 template<typename...Ts>
-struct List;
+struct List {};
 
 
 
@@ -365,13 +365,18 @@ using take_while_t = typename TakeWhile<P, L>::type;
 template<std::size_t N, typename L>
 struct TakeN{};
 
+template<>
+struct TakeN<0, List<>> {
+    using type = List<>;
+};
+
 template<std::size_t N>
 struct TakeN<N, List<>> {
     using type = List<>;
 };
 
-template<typename L>
-struct TakeN<0, L> {
+template<typename T, typename...Ts>
+struct TakeN<0, List<T, Ts...>> {
     using type = List<>;
 };
 
@@ -404,6 +409,32 @@ struct IsSameHKType<C<Ts...>, C> {
 };
 
 template<typename T, template<typename...> typename C>
-inline constexpr bool is_same_HK_type_t = IsSameHKType<T, C>::value;
+inline constexpr bool is_same_HK_type_v = IsSameHKType<T, C>::value;
+
+
+
+
+
+
+
+
+/*
+    Count `E` in `L`
+ */
+template<typename E, typename L>
+struct Count {};
+
+template<typename E>
+struct Count<E, List<>> {
+    static constexpr std::size_t value = 0;
+};
+
+template<typename E, typename T, typename...Ts>
+struct Count<E, List<T, Ts...>> {
+    static constexpr std::size_t value = Count<E, List<Ts...>>::value + std::is_same_v<E, T>;
+};
+
+template<typename E, typename L>
+constexpr std::size_t count_v = Count<E, L>::value;
 
 }

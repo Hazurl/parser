@@ -37,7 +37,7 @@ struct Opt : Parser<Opt<P>, Maybe<details::parsed_type_t<P>> > {
     Parser as value
  */
 
-template<auto& p>
+template<auto p>
 constexpr Opt<std::decay_t<decltype(p)>> opt;
 
 }

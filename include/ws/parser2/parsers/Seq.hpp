@@ -95,7 +95,7 @@ private:
     Parser as value
  */
 
-template<auto&...ps>
+template<auto...ps>
 constexpr Seq<std::decay_t<decltype(ps)>...> seq;
 
 

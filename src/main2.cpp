@@ -64,8 +64,8 @@ struct BoundedReader {
 
 private:
 
-    char const* const begin{ nullptr };
-    char const* const end{ nullptr };
+    char const* begin{ nullptr };
+    char const* end{ nullptr };
     std::size_t index{ 0 };
 
 };
@@ -112,7 +112,7 @@ void test(char const* message, char const (&input)[N], R expected, P) {
         ws::module::errorln(
             ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
             " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
-            ", expected ", ws::module::style::bold, ws::module::colour::fg::green, "[", expected, "]", ws::module::style::reset,
+            ", expected ", ws::module::style::bold, ws::module::colour::fg::green, "[", wsp::describe(expected), "]", ws::module::style::reset,
             " but got ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(res), "]", ws::module::style::reset);
         return;
     }
@@ -121,9 +121,9 @@ void test(char const* message, char const (&input)[N], R expected, P) {
     if (!(value == expected)) {
         ws::module::errorln(
             ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
-            " with [", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset,
-            ", expected ", ws::module::style::bold, ws::module::colour::fg::green, "[", expected, "]", ws::module::style::reset,
-            " but got ", ws::module::style::bold, ws::module::colour::fg::green, value, "]", ws::module::style::reset);
+            " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset,
+            ", expected ", ws::module::style::bold, ws::module::colour::fg::green, "[", wsp::describe(expected), "]", ws::module::style::reset,
+            " but got ", ws::module::style::bold, ws::module::colour::fg::green, "[", wsp::describe(value), "]", ws::module::style::reset);
         return;
     }
 
@@ -143,90 +143,49 @@ void test_err(char const* message, char const (&input)[N], E error, P) {
         ws::module::errorln(
             ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
             " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
-            ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
-            " got ", ws::module::style::bold, ws::module::colour::fg::green, "[", res.success(), "]", ws::module::style::reset);
+            ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(error), "]", ws::module::style::reset, " but",
+            " got ", ws::module::style::bold, ws::module::colour::fg::green, "[", wsp::describe(res.success()), "]", ws::module::style::reset);
         return;
     }
 
-    auto& value = res.template error(); 
+    if constexpr (P::can_fail) {
+        auto& value = res.template error(); 
 
-    if constexpr (wspd::is_same_HK_type_t<wspd::error_of_t<wspd::result_type_t<P>>, wsp::Sum>) {
-        if (res.template is_error() && !std::holds_alternative<E>(res.error())) {
-            ws::module::errorln(
-                ws::module::style::bold, "[", message, "]", ws::module::style::reset, "]", 
-                " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
-                ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
-                " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(res), "]", ws::module::style::reset);
-            return;
-        }
-
-        if (!(std::get<E>(value) == error)) {
-            ws::module::errorln(
-                ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
-                " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
-                ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
-                " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", value, "]", ws::module::style::reset);
-            return;
-        }
-    } else {
-        if (!(value == error)) {
-            ws::module::errorln(
-                ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
-                " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
-                ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", error, "]", ws::module::style::reset, " but",
-                " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", value, "]", ws::module::style::reset);
-            return;
-        }
-    }
-
-
-    ws::module::successln(
-        ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
-        " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, " successfully failed");
-}
-
-template<char c>
-struct NotMatching {};
-
-namespace ws::parser2 {
-template<char c>
-struct Describe<NotMatching<c>> {
-    std::string operator()(NotMatching<c> const&) {
-        return "Not matching '" + std::string(1, c) + "' (" + std::to_string(static_cast<int>(c)) + ")";
-    }
-};
-}
-
-template<char c>
-std::ostream& operator <<(std::ostream& os, NotMatching<c>) {
-    return os << "Not matching '" << c << "' (" << static_cast<int>(c) << ')';
-}
-
-template<char c>
-bool operator ==(NotMatching<c>, NotMatching<c>) {
-    return true;
-}
-
-
-template<char c>
-struct Match : wsp::Parser<Match<c>, char, wsp::Sum<NotMatching<c>, wspe::EndOfFile>> {
-    template<typename R> 
-    static wspd::result_type_t<Match<c>> parse(R reader) {
-        auto res = wsp::NextC::parse(reader);
-        if (res.is_success()) {
-            if (res.success() == c) {
-                return wsp::success(res.cursor(), res.success());
+        if constexpr (wspd::is_same_HK_type_v<wspd::error_of_t<wspd::result_type_t<P>>, wsp::Sum>) {
+            if (res.template is_error() && !std::holds_alternative<E>(res.error())) {
+                ws::module::errorln(
+                    ws::module::style::bold, "[", message, "]", ws::module::style::reset, "]", 
+                    " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
+                    ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(error), "]", ws::module::style::reset, " but",
+                    " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(res), "]", ws::module::style::reset);
+                return;
             }
 
-            return wsp::fail(res.cursor(), NotMatching<c>{});
+            if (!(std::get<E>(value) == error)) {
+                ws::module::errorln(
+                    ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
+                    " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
+                    ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(error), "]", ws::module::style::reset, " but",
+                    " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(value), "]", ws::module::style::reset);
+                return;
+            }
+        } else {
+            if (!(value == error)) {
+                ws::module::errorln(
+                    ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
+                    " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, 
+                    ", expected ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(error), "]", ws::module::style::reset, " but",
+                    " got ", ws::module::style::bold, ws::module::colour::fg::red, "[", wsp::describe(value), "]", ws::module::style::reset);
+                return;
+            }
         }
 
-        return wsp::fail(res.cursor(), wspe::EndOfFile{});
-    }
-};
 
-template<char c>
-constexpr Match<c> match;
+        ws::module::successln(
+            ws::module::style::bold, "[", message, "]", ws::module::style::reset, 
+            " with ", ws::module::style::bold, ws::module::colour::fg::cyan, "[", input, "]", ws::module::style::reset, " successfully failed");
+    }
+}
 
 /*
 
@@ -313,7 +272,21 @@ static_assert(wspd::is_parser_valid_v<BoundedReader, NoBaseParser>);
 */
 
 int char_to_int(char c) { return static_cast<int>(c); }
+int digit_to_int(char c) { return c - '0'; }
 char default_maybe(wsp::Maybe<char>&& m) { return m.value_or(' '); };
+bool is_digit(char c) { return c >= '0' && c <= '9'; }
+char EOF_to_space(wspe::EndOfFile) { return ' '; };
+std::string select_middle(wsp::Product<char, std::string, char>&& p) {
+    return std::get<1>(p);
+}
+int string_to_int(std::string&& str) {
+    int i{ 0 };
+    for(auto c : str) {
+        i *= 10;
+        i += digit_to_int(c);
+    }
+    return i;
+}
 
 int main() {
     test(
@@ -366,79 +339,256 @@ int main() {
     );
 
     test(
-        "Match 's'",
+        "Match maybe 's'",
         "something",
-        's',
-        match<'s'>
+        wsp::Maybe<char>('s'),
+        wsp::opt<wsp::ch<'s'>>
     );
 
-    test_err(
-        "Match 's' on EOF",
+    test(
+        "Match maybe 's' on EOF",
         "",
-        wspe::EndOfFile{},
-        match<'s'>
+        wsp::Maybe<char>(std::nullopt),
+        wsp::opt<wsp::ch<'s'>>
     );
 
     test_err(
         "No Match 's'",
         "a",
-        NotMatching<'s'>{},
-        match<'s'>
+        wspe::NotMatching<'s'>{},
+        wsp::ch<'s'>
+    );
+
+    test(
+        "Simple ch",
+        "something",
+        's',
+        wsp::ch<'s'>
+    );
+
+    test_err(
+        "ch on EOF",
+        "",
+        wspe::EndOfFile{},
+        wsp::ch<'s'>
+    );
+
+    test_err(
+        "ch not matching",
+        "something",
+        wspe::NotMatching<'x'>{},
+        wsp::ch<'x'>
     );
 
     test(
         "Match 's' after 'a' failed",
         "something",
         wsp::Sum<char>('s'),
-        wsp::first<match<'a'>, match<'s'>>
+        wsp::first<wsp::ch<'a'>, wsp::ch<'s'>>
     );
 
     test(
         "Match 's' before 'a' failed",
         "something",
         wsp::Sum<char>('s'),
-        wsp::first<match<'s'>, match<'a'>>
+        wsp::first<wsp::ch<'s'>, wsp::ch<'a'>>
     );
 
     test(
         "Match 's' before `nextc` works",
         "something",
         wsp::Sum<char>('s'),
-        wsp::first<match<'s'>, wsp::nextc>
+        wsp::first<wsp::ch<'s'>, wsp::nextc>
     );
 
     test_err(
         "No Match 's' and 'a'",
         "foo",
-        wsp::Product<wsp::Sum<NotMatching<'s'>, wspe::EndOfFile>, wsp::Sum<NotMatching<'a'>, wspe::EndOfFile>>(),
-        wsp::first<match<'s'>, match<'a'>>
+        wsp::Product<wsp::Sum<wspe::NotMatching<'s'>, wspe::EndOfFile>, wsp::Sum<wspe::NotMatching<'a'>, wspe::EndOfFile>>(),
+        wsp::first<wsp::ch<'s'>, wsp::ch<'a'>>
     );
 
     test(
         "Simple Next with transformer",
         "something",
         char_to_int('s'),
-        wsp::nextc [ wsp::lift<char_to_int> ]
+        wsp::nextc [ wsp::map<char_to_int> ]
     );
 
     test_err(
         "Next with transformer on EOF",
         "",
         wspe::EndOfFile{},
-        wsp::nextc [ wsp::lift<char_to_int> ]
+        wsp::nextc [ wsp::map<char_to_int> ]
     );
 
     test(
         "Match 's'",
         "something",
         's',
-        Match<'s'>{} [ wsp::lift<default_maybe> ]
+        wsp::opt<wsp::ch<'s'>> [ wsp::map<default_maybe> ]
     );
+
+    test(
+        "many Next",
+        "something",
+        std::string{ "something" },
+        wsp::many<wsp::nextc, std::basic_string>
+    );
+
+    test(
+        "repeat at least 5 times Next",
+        "something",
+        std::string{ "something" },
+        wsp::repeat<wsp::nextc, 5, wsp::open_maximum, std::basic_string>
+    );
+
+    test(
+        "repeat between 5 and 6 times Next",
+        "something",
+        std::string{ "someth" },
+        wsp::repeat<wsp::nextc, 5, 6, std::basic_string>
+    );
+
+    test(
+        "Exactly 3 times Next",
+        "something",
+        std::string{ "som" },
+        wsp::exact<wsp::nextc, 3, std::basic_string>
+    );
+
+    test_err(
+        "Some Next on EOF",
+        "",
+        wspe::Expected<wsp::NextC>{},
+        wsp::some<wsp::nextc>
+    );
+
+    test_err(
+        "repeat at least 5 times Next on 4 characters",
+        "some",
+        wspe::Expected<wsp::NextC>{},
+        wsp::repeat<wsp::nextc, 5, wsp::open_maximum, std::basic_string>
+    );
+
+    test(
+        "Next which satisfy is_digit",
+        "123",
+        '1',
+        wsp::nextc [ wsp::filter<is_digit> ]
+    );
+
+    test_err(
+        "Next which does not satisfy is_digit",
+        "something",
+        wspe::PredicateFailure{},
+        wsp::nextc [ wsp::filter<is_digit> ]
+    );
+
+    test_err(
+        "Next with satisfy `is_digit` on EOF",
+        "",
+        wspe::EndOfFile{},
+        wsp::nextc [ wsp::filter<is_digit> ]
+    );
+
+    test(
+        "Next which satisfy is_digit and transform to an int",
+        "123",
+        1,
+        wsp::nextc [ wsp::filter<is_digit> ] [ wsp::map<digit_to_int> ]
+    );
+
+    test(
+        "Next on EOF with handle",
+        "",
+        ' ',
+        wsp::nextc [ wsp::handler<EOF_to_space> ]
+    );
+
+    test(
+        "Next on EOF with default",
+        "",
+        ' ',
+        wsp::nextc [ wsp::or_else<' '> ]
+    );
+
+    constexpr auto integer = 
+        wsp::seq<
+            wsp::ch<'('>, 
+            wsp::many<wsp::nextc [ wsp::filter<is_digit> ], std::basic_string>, 
+            wsp::ch<')'>
+        > [ wsp::peek<1> ] [ wsp::map<string_to_int> ];
+
+    test(
+        "parse integer in parenthesis",
+        "(123456)",
+        123456,
+        integer
+    );
+
+    test_err(
+        "parse integer in parenthesis with no '('",
+        "13)",
+        wsp::Sum<wspe::NotMatching<'('>, wspe::EndOfFile>{ wspe::NotMatching<'('>{} },
+        integer
+    );
+
+    test_err(
+        "parse integer in parenthesis with no '(' but EOF",
+        "",
+        wsp::Sum<wspe::NotMatching<'('>, wspe::EndOfFile>{ wspe::EndOfFile{} },
+        integer
+    );
+
+    test_err(
+        "parse integer in parenthesis with no ')'",
+        "(13 ",
+        wsp::Sum<wspe::NotMatching<')'>, wspe::EndOfFile>{ wspe::NotMatching<')'>{} },
+        integer
+    );
+
+    test_err(
+        "parse integer in parenthesis with no ')' but EOF",
+        "(13",
+        wsp::Sum<wspe::NotMatching<')'>, wspe::EndOfFile>{ wspe::EndOfFile{} },
+        integer
+    );
+
+    test(
+        "Simple peek",
+        "something",
+        'm',
+        wsp::seq<wsp::nextc, wsp::nextc, wsp::nextc> [ wsp::peek<2> ]
+    );
+
+    test(
+        "Simple select",
+        "something",
+        wsp::Product('m', 'o', 'm'),
+        wsp::seq<wsp::nextc, wsp::nextc, wsp::nextc> [ wsp::select<2, 1, 2> ]
+    );
+
+    test_err(
+        "Simple peek_err",
+        "",
+        wspe::EndOfFile{},
+        wsp::first<wsp::nextc, wsp::nextc, wsp::nextc> [ wsp::peek_err<2> ]
+    );
+
+    test_err(
+        "Simple select_err",
+        "",
+        wsp::Product(wspe::EndOfFile{}, wspe::EndOfFile{}, wspe::EndOfFile{}),
+        wsp::first<wsp::nextc, wsp::nextc> [ wsp::select_err<1, 0, 1> ]
+    );
+
 /*
     debug_t<
 
     > _;
 */
+
     static_assert(
         wspd::is_parser_valid_v<BoundedReader, wsp::NextC> &&
         wspd::is_parser_valid_v<BoundedReader, wsp::Opt<wsp::NextC>> &&
@@ -446,9 +596,12 @@ int main() {
         wspd::is_parser_valid_v<BoundedReader, wsp::Opt<wsp::Opt<wsp::NextC>>> &&
         wspd::is_parser_valid_v<BoundedReader, wsp::Seq<wsp::Seq<wsp::NextC, wsp::NextC>, wsp::NextC>> &&
         wspd::is_parser_valid_v<BoundedReader, wsp::Seq<wsp::Opt<wsp::NextC>, wsp::Seq<wsp::NextC, wsp::NextC>>> &&
-        wspd::is_parser_valid_v<BoundedReader, Match<'a'>> &&
-        wspd::is_parser_valid_v<BoundedReader, wsp::First<Match<'a'>, wsp::NextC>> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::First<decltype(wsp::ch<'a'>), wsp::NextC>> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::First<wsp::Opt<wsp::NextC>, wsp::Opt<wsp::NextC>>> &&
         wspd::is_parser_valid_v<BoundedReader, wsp::Transformer<wsp::NextC, char_to_int>> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::Satisfy<wsp::NextC, is_digit>> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::Handle<wsp::NextC, EOF_to_space>> &&
+        wspd::is_parser_valid_v<BoundedReader, wsp::Repeat<wsp::NextC, 2, wsp::open_maximum, std::basic_string>> &&
         true, 
         "Something is wrong...");
 

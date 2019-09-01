@@ -31,7 +31,7 @@ using list_of_list_of_error_while_not_empty_t =
 
 template<typename...Ps>
 using list_of_errors_t = 
-    details::flatten_unique_t<list_of_list_of_error_while_not_empty_t<Ps...>>;
+    details::flatten_t<list_of_list_of_error_while_not_empty_t<Ps...>>;
 
 template<typename...Ps>
 using product_of_errors = 
@@ -39,7 +39,7 @@ using product_of_errors =
 
 template<typename...Ps>
 using product_of_all_errors = 
-    details::list_to_t<details::flatten_unique_t<list_of_list_of_error_t<Ps...>>, Product>;
+    details::list_to_t<details::flatten_t<list_of_list_of_error_t<Ps...>>, Product>;
 
 
 
@@ -209,7 +209,7 @@ private:
     Parser as value
  */
 
-template<auto&...ps>
+template<auto...ps>
 constexpr First<std::decay_t<decltype(ps)>...> first;
 
 

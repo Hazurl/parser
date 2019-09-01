@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-#include <ws/parser2/containers/ParserHeader.hpp>
+#include <ws/parser2/containers/Parser.hpp>
 #include <ws/parser2/Details.hpp>
 
 namespace ws::parser2 {
@@ -11,12 +11,13 @@ namespace ws::parser2 {
     Used in operator[] to get a compile-time callable
 */
 template<auto& F>
-struct Lift {
-    static inline constexpr auto& value = F;
-};
+struct Map {};
 
 template<auto& F>
-constexpr Lift<F> lift;
+constexpr Map<F> map;
+
+
+
 
 
 template<typename P, auto& F>
@@ -36,8 +37,19 @@ struct Transformer : Parser<Transformer<P, F>, std::invoke_result_t<decltype(F),
     }
 };
 
-template<auto& P, auto& F>
+template<auto P, auto& F>
 constexpr Transformer<std::decay_t<decltype(P)>, F> transformer;
 
+
+
+
+namespace details {
+
+template<auto& F, typename P>
+struct GetTransformer<::ws::parser2::Map<F>, P> {
+    using type = Transformer<P, F>;
+};
+
+}
 
 }
