@@ -3,27 +3,27 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Parser</title>
+        <title>Parser - Parser</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
 
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
         <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
         <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="highlight.css">
-        <link rel="stylesheet" href="tomorrow-night.css">
-        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
         
@@ -32,7 +32,7 @@
     </head>
     <body class="light">
         <!-- Provide site root to javascript -->
-        <script type="text/javascript">var path_to_root = "";</script>
+        <script type="text/javascript">var path_to_root = "../";</script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
         <script type="text/javascript">
@@ -72,7 +72,7 @@
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
-            <ol class="chapter"><li><a href="Introduction/Introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><ol class="section"><li><a href="Introduction/Parser.html"><strong aria-hidden="true">1.1.</strong> Parser</a></li><li><a href="Introduction/Result.html"><strong aria-hidden="true">1.2.</strong> Result</a></li></ol></li></ol>
+            <ol class="chapter"><li><a href="../Introduction/Introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><ol class="section"><li><a href="../Introduction/Parser.html" class="active"><strong aria-hidden="true">1.1.</strong> Parser</a></li><li><a href="../Introduction/Result.html"><strong aria-hidden="true">1.2.</strong> Result</a></li></ol></li></ol>
         </nav>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -105,7 +105,7 @@
                         <h1 class="menu-title">Parser</h1> 
 
                         <div class="right-buttons">
-                            <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <a href="../print.html" title="Print this book" aria-label="Print this book">
                                 <i id="print-button" class="fa fa-print"></i>
                             </a>
                         </div>
@@ -136,50 +136,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <a class="header" href="#introduction" id="introduction"><h1>Introduction</h1></a>
-<p>This library implements several parsers, that, combined can create much complex parser.</p>
-<p>During all the book, I will use another syntax to describe parsers in order to avoid complex and misleading c++ template syntax. <code>Parser S E</code> is the type of parsers that either successfully parse a value of type <code>S</code>, or fail with the error <code>E</code>. <em>In c++</em>, all parsers <code>P</code> inherit from <code>Parser&lt;P, S, E&gt;</code>. In addition <code>Parser S</code> is the type of parser that can't fail. If you see c++ code you can expect type to start with a upper case letter and values with a lower case letter.</p>
-<p>Because an example is much better than words, here's a parser for expressions containing signed integer numbers and addition:</p>
-<pre><code class="language-cpp">using namespace wpr;
-
-bool is_digit(char c) { return c &gt;= '0' &amp;&amp; c &lt;= '9'; }
-int make_signed_number(std::vector&lt;char&gt; sign, int number) {
-    return number * (sign.size() % 2 ? 1 : -1);
-}
-
-int evaluate(int number, std::vector&lt;int&gt; numbers) {
-    return std::accumulate(std::begin(numbers), std::end(numbers), number);
-}
-
-// digit :: Parser char (Sum PredicateFailure EndOfFile)
-constexpr auto 
-    digit 
-=   nextc [ filter&lt;is_digit&gt; ];
-
-// number :: Parser int (Sum PredicateFailure EndOfFile)
-constexpr auto 
-    number 
-=   some&lt;digit, std::basic_string&gt; [ map&lt;std::stoi&gt; ];
-
-// signed_number :: Parser int (Sum PredicateFailure EndOfFile)
-constexpr auto 
-    signed_number 
-=   seq&lt; many&lt;ch&lt;'-'&gt;&gt;, number &gt; [ map_apply&lt;make_signed_number&gt; ];
-
-// expression :: Parser int (Sum PredicateFailure EndOfFile)
-constexpr auto 
-    expression
-=   seq&lt; signed_number, many&lt;seq&lt; ch&lt;'+'&gt;, signed_number &gt;&gt;&gt; [ map_apply&lt;evaluate&gt; ]; 
-
-
-
-int main() {
-    auto res = parse(expression, BoundedReader(&quot;42+-8+----45&quot;));
-    return res.is_success() ? res.success() : -1;
-}
-</code></pre>
-<p>Output <code>79</code>.</p>
-<a class="header" href="#parser" id="parser"><h1>Parser</h1></a>
+                        <a class="header" href="#parser" id="parser"><h1>Parser</h1></a>
 <p>As said in the introduction, a parser can either succeed or fail, some of them always succeed. The essence of this library is to <em>combine</em> parsers. One can distinguish three types of parsers:</p>
 <ul>
 <li><strong>Terminal</strong>: It doesn't use any other parser, we can name for example <code>nextc</code> which read the next character or <code>unit&lt;v&gt;</code> which return <code>v</code> as a success.</li>
@@ -201,78 +158,21 @@ Result&lt;S, E&gt; parse(Reader reader);
 <li><code>template&lt;typename P&gt; constexpr bool can_fail_v</code> is true if and only if <code>P</code> can fail</li>
 </ul>
 <p>If you write your own parser, you can check is validity with <code>is_parser_v&lt;P&gt;</code>. If it's not, some static_assert will lead you to cause.</p>
-<a class="header" href="#result" id="result"><h1>Result</h1></a>
-<pre><code class="language-cpp">template&lt;typename S, typename E = void&gt;
-struct Result;
-</code></pre>
-<p>This is the type returned by evaluating a parser with a reader. <code>Result&lt;S&gt;</code> or <code>Result&lt;S, void&gt;</code> is the result of a parser that can't fail.</p>
-<p>A result holds either <code>S</code> or <code>E</code> aswell as a <code>cursor</code> that represent the furthest the parser goes.</p>
-<a class="header" href="#can_fail" id="can_fail"><h2>can_fail</h2></a>
-<p><code>static constexpr bool can_fail</code>
-It's a trait telling whether or not the result can hold a failure.</p>
-<a class="header" href="#constructor" id="constructor"><h2>Constructor</h2></a>
-<pre><code class="language-cpp">template&lt;typename...Args&gt;
-Result(error_tag_t, std::size_t cursor, Args&amp;&amp;...args);             (1)
-
-template&lt;typename...Args&gt;
-Result(success_tag_t, std::size_t cursor, Args&amp;&amp;...args);           (2)
-
-template&lt;typename L, typename...Args&gt;
-Result(ResultBuilder&lt;L&gt; l);                                         (3)
-</code></pre>
-<p><code>(1)</code> constructs a Result holding a failure <code>E</code> from <code>args</code>.<br />
-<code>(2)</code> constructs a Result holding a success <code>S</code> from <code>args</code>.</p>
-<p><code>(1)</code> is only enable if <code>E</code> isn't <code>void</code>.</p>
-<p><code>ResultBuilder&lt;L&gt;</code> in <code>(3)</code>is constructed from the functions <code>success</code> and <code>fail</code>.</p>
-<a class="header" href="#is_success-is_error" id="is_success-is_error"><h2>is_success, is_error</h2></a>
-<pre><code class="language-cpp">bool Result::is_success() const;
-</code></pre>
-<p>Returns <code>true</code> if the result holds <code>S</code>.</p>
-<pre><code class="language-cpp">bool Result::is_error() const;
-</code></pre>
-<p>Returns <code>true</code> if the result holds <code>E</code>. It's only enable if <code>E</code> isn't <code>void</code>.</p>
-<a class="header" href="#success-error" id="success-error"><h2>success, error</h2></a>
-<pre><code class="language-cpp">S const&amp; Result::success() const&amp;;
-S&amp;&amp; Result::success() &amp;&amp;;
-S&amp; Result::success() &amp;;
-</code></pre>
-<p>Access the success. The behaviour is undefined if <code>!is_success()</code>.</p>
-<pre><code class="language-cpp">E const&amp; Result::error() const&amp;;
-E&amp;&amp; Result::error() &amp;&amp;;
-E&amp; Result::error() &amp;;
-</code></pre>
-<p>Access the error. The behaviour is undefined if <code>!is_error()</code>. It's only enable if <code>E</code> isn't <code>void</code>.</p>
-<a class="header" href="#cursor" id="cursor"><h2>cursor</h2></a>
-<pre><code class="language-cpp">std::size_t Result::cursor() const;
-</code></pre>
-<p>Simply returns the <code>cursor</code> attached to the result.</p>
-<a class="header" href="#success-fail" id="success-fail"><h2>success, fail</h2></a>
-<pre><code class="language-cpp">template&lt;typename...Args&gt;
-auto success(std::size_t cursor, Args&amp;&amp;...args);
-
-template&lt;typename...Args&gt;
-auto fail(std::size_t cursor, Args&amp;&amp;...args);
-</code></pre>
-<p>Both methods returns a ResultBuilder that can be used to create a Result. It's purpose is to avoid verbosity of having to pass the tag and the result template argument.</p>
-<blockquote>
-<p>Example:</p>
-<pre><code class="language-cpp">Result&lt;int, float&gt; foo(bool b, std::size_t cursor) {
-    if (b) {
-        return success(cursor, 42);
-    }   
-    else {
-        return fail(cursor, 13.37f);
-    }   
-}
-</code></pre>
-</blockquote>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
+                            <a rel="prev" href="../Introduction/Introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
 
+                        
+                            <a rel="next" href="../Introduction/Result.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
                         
 
                         <div style="clear: both"></div>
@@ -282,7 +182,15 @@ auto fail(std::size_t cursor, Args&amp;&amp;...args);
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
+                    <a href="../Introduction/Introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
 
+                
+                    <a href="../Introduction/Result.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
                 
             </nav>
 
@@ -310,26 +218,18 @@ auto fail(std::size_t cursor, Args&amp;&amp;...args);
         
 
         
-        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
         
 
-        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
-        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
 
         <!-- Custom JS scripts -->
         
 
-        
-        
-        <script type="text/javascript">
-        window.addEventListener('load', function() {
-            window.setTimeout(window.print, 100);
-        });
-        </script>
-        
         
 
     </body>

@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Chapter 1 - Parser</title>
+        <title>Introduction - Parser</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -72,7 +72,7 @@
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
-            <ol class="chapter"><li><a href="chapter_1.html"><strong aria-hidden="true">1.</strong> Chapter 1</a></li></ol>
+            <ol class="chapter"><li><a href="Introduction/Introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><ol class="section"><li><a href="Introduction/Parser.html"><strong aria-hidden="true">1.1.</strong> Parser</a></li><li><a href="Introduction/Result.html"><strong aria-hidden="true">1.2.</strong> Result</a></li></ol></li></ol>
         </nav>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -136,7 +136,49 @@
 
                 <div id="content" class="content">
                     <main>
-                        <a class="header" href="#chapter-1" id="chapter-1"><h1>Chapter 1</h1></a>
+                        <a class="header" href="#introduction" id="introduction"><h1>Introduction</h1></a>
+<p>This library implements several parsers, that, combined can create much complex parser.</p>
+<p>During all the book, I will use another syntax to describe parsers in order to avoid complex and misleading c++ template syntax. <code>Parser S E</code> is the type of parsers that either successfully parse a value of type <code>S</code>, or fail with the error <code>E</code>. <em>In c++</em>, all parsers <code>P</code> inherit from <code>Parser&lt;P, S, E&gt;</code>. In addition <code>Parser S</code> is the type of parser that can't fail. If you see c++ code you can expect type to start with a upper case letter and values with a lower case letter.</p>
+<p>Because an example is much better than words, here's a parser for expressions containing signed integer numbers and addition:</p>
+<pre><code class="language-cpp">using namespace wpr;
+
+bool is_digit(char c) { return c &gt;= '0' &amp;&amp; c &lt;= '9'; }
+int make_signed_number(std::vector&lt;char&gt; sign, int number) {
+    return number * (sign.size() % 2 ? 1 : -1);
+}
+
+int evaluate(int number, std::vector&lt;int&gt; numbers) {
+    return std::accumulate(std::begin(numbers), std::end(numbers), number);
+}
+
+// digit :: Parser char (Sum PredicateFailure EndOfFile)
+constexpr auto 
+    digit 
+=   nextc [ filter&lt;is_digit&gt; ];
+
+// number :: Parser int (Sum PredicateFailure EndOfFile)
+constexpr auto 
+    number 
+=   some&lt;digit, std::basic_string&gt; [ map&lt;std::stoi&gt; ];
+
+// signed_number :: Parser int (Sum PredicateFailure EndOfFile)
+constexpr auto 
+    signed_number 
+=   seq&lt; many&lt;ch&lt;'-'&gt;&gt;, number &gt; [ map_apply&lt;make_signed_number&gt; ];
+
+// expression :: Parser int (Sum PredicateFailure EndOfFile)
+constexpr auto 
+    expression
+=   seq&lt; signed_number, many&lt;seq&lt; ch&lt;'+'&gt;, signed_number &gt;&gt;&gt; [ map_apply&lt;evaluate&gt; ]; 
+
+
+
+int main() {
+    auto res = parse(expression, BoundedReader(&quot;42+-8+----45&quot;));
+    return res.is_success() ? res.success() : -1;
+}
+</code></pre>
+<p>Output <code>79</code>.</p>
 
                     </main>
 
