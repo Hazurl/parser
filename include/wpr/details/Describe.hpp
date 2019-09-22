@@ -2,13 +2,14 @@
 
 #include <string>
 #include <type_traits>
+#include <typeinfo>
 
 namespace wpr {
 
 template<typename T, typename = void>
 struct Describe {
     std::string operator()(T const&) {
-        return "~~ `describe` unimplemented for this type ~~";
+        return std::string{ "~~ `describe` unimplemented for type `" } + typeid(T).name() + "` ~~";
     }
 };
 
