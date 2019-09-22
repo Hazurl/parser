@@ -18,7 +18,7 @@ namespace {
 template<typename R, typename E>
 using error_t = 
     std::conditional_t<
-        /* if */ std::is_same_v<R, void> || std::is_same_v<R, E>, 
+        /* if   */ std::is_same_v<R, void> || std::is_same_v<R, E>, 
         /* then */ E,
         /* else */ Sum<E, R>
     >;
@@ -81,8 +81,8 @@ bool is_equals(decltype(V) const& o) {
 
 }
 
-template<auto V>
-constexpr Satisfy<Next<decltype(V)>, is_equals<V>, error::NotMatching<V>> ch;
+template<auto V, auto P = next<decltype(V)>>
+constexpr Satisfy<decltype(P), is_equals<V>, error::NotMatching<V>> ch;
 
 
 
