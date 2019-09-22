@@ -51,14 +51,14 @@ struct Satisfy : Parser<Satisfy<P, F, E>, details::parsed_type_t<P>, error_t<det
 
         if constexpr(P::can_fail) {
             if (res.is_error()) {
-                return fail(res.cursor(), std::move(res).error());
+                return fail(r.cursor(), std::move(res).error());
             }
         }
 
         if (F(static_cast<const_ref_res_t>(res).success())) {
             return success(res.cursor(), std::move(res).success());
         } else {
-            return fail(res.cursor(), E{});
+            return fail(r.cursor(), E{});
         }
     }
 };

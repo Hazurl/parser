@@ -109,20 +109,20 @@ public:
 
     template<typename R>
     static result_t parse(R reader) {
-        return parse_at<0>(reader);
+        return parse_at<0>(reader, reader.cursor());
     }
 
 private:
 
     template<std::size_t I, typename R, typename...Rs>
     static std::enable_if_t<(I >= sizeof...(Ps)), result_t> 
-    parse_at(R reader, Rs&&... rs) {
-        return fail(reader.cursor(), Product(std::move(rs)...));
+    parse_at(R, std::size_t furthest, Rs&&... rs) {
+        return fail(furthest, Product(std::move(rs)...));
     }
 
     template<std::size_t I, typename R, typename...Rs>
     static std::enable_if_t<(I < sizeof...(Ps)), result_t> 
-    parse_at(R reader, Rs&&... rs) {
+    parse_at(R reader, std::size_t furthest, Rs&&... rs) {
         using P = details::at_t<details::List<Ps...>, I>;
         auto result = P::parse(reader);
 
@@ -130,6 +130,7 @@ private:
             if(result.is_error()) {
                 return parse_at<I+1>(
                     reader, 
+                    std::max(result.cursor(), furthest),
                     std::move(rs)..., 
                     std::move(result).error()
                 );
