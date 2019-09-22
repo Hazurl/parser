@@ -9,15 +9,14 @@ namespace wpr::error {
 
 /*
     Expected type
-    -- represents somethign expected
+    -- represents something expected
     -- for example
        decltype(some<nextc>)::parse(Reader{ "" })
-       => Error: Expected Next<char>
+       => Error: Expected 
  */
-template<typename P>
 struct Expected {
     std::string what() const {
-        return "Expected to parser P";
+        return "Expected something";
     }
 };
 
@@ -28,9 +27,8 @@ struct Expected {
     Operator <<
  */
 
-template<typename P>
-std::ostream& operator <<(std::ostream& os, Expected<P>) {
-    return os << "Expected to parser P";
+std::ostream& operator <<(std::ostream& os, Expected) {
+    return os << "Expected something";
 }
 
 
@@ -41,8 +39,7 @@ std::ostream& operator <<(std::ostream& os, Expected<P>) {
     Operator ==
  */
 
-template<typename P>
-bool operator ==(Expected<P>, Expected<P>) {
+bool operator ==(Expected, Expected) {
     return true;
 }
 
@@ -58,10 +55,10 @@ namespace wpr {
     Describe
  */
 
-template<typename P>
-struct Describe<error::Expected<P>> {
-    std::string operator()(error::Expected<P> const&) {
-        return "Expected to parser P";
+template<>
+struct Describe<error::Expected> {
+    std::string operator()(error::Expected const&) {
+        return "Expected something";
     }
 };
 
