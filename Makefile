@@ -67,9 +67,9 @@ header-of = $(1:%$(EXT_SRC_FILE)=%$(EXT_INC_FILE))
 # Relative to $(SRC_FOLDER)
 SRC_EXCLUDE_FILE := 
 # All files that are not use for libraries, don't add src/
-SRC_MAINS := test.cpp main.cpp main2.cpp
+SRC_MAINS := main.cpp
 # The main file to use (must be in $(SRC_MAINS))
-SRC_MAIN := main2.cpp
+SRC_MAIN := main.cpp
 
 #####
 ##### FLAGS
