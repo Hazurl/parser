@@ -331,25 +331,28 @@ using filter_out_t = typename FilterOut<E, L>::type;
     Takes elements while the predicate is true
  */
 
-template<template<typename> typename P, typename L>
+template<bool includes_last_and_invert_condition, template<typename> typename P, typename L>
 struct TakeWhile {};
 
-template<template<typename> typename P>
-struct TakeWhile<P, List<>> {
+template<bool includes_last_and_invert_condition, template<typename> typename P>
+struct TakeWhile<includes_last_and_invert_condition, P, List<>> {
     using type = List<>;
 };
 
-template<template<typename> typename P, typename T, typename...Ts>
-struct TakeWhile<P, List<T, Ts...>> {
+template<bool includes_last_and_invert_condition, template<typename> typename P, typename T, typename...Ts>
+struct TakeWhile<includes_last_and_invert_condition, P, List<T, Ts...>> {
     using type = std::conditional_t<
-        P<T>::value, 
-        push_t<T, typename TakeWhile<P, List<Ts...>>::type>,
-        List<>
+        P<T>::value != includes_last_and_invert_condition, 
+        push_t<T, typename TakeWhile<includes_last_and_invert_condition, P, List<Ts...>>::type>,
+        std::conditional_t<includes_last_and_invert_condition, List<T>, List<>>
     >;
 };
 
 template<template<typename> typename P, typename L>
-using take_while_t = typename TakeWhile<P, L>::type;
+using take_while_t = typename TakeWhile<false, P, L>::type;
+
+template<template<typename> typename P, typename L>
+using take_until_t = typename TakeWhile<true, P, L>::type;
 
 
 
