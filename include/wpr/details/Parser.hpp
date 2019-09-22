@@ -91,7 +91,6 @@ using parser_from_list_t = typename ErrorsToParser<P, T, L>::type;
 
 
 
-
 /*
     Validate a parser
  */
@@ -204,5 +203,20 @@ struct ValidateCustomParser<R, P, std::enable_if_t<std::is_base_of_v<parser_type
 
 template<typename R, typename P>
 constexpr bool is_parser_valid_v = ValidateCustomParser<R, P, void>::value;
+
+}
+
+namespace wpr {
+ 
+ 
+/*
+    Parse from value
+ */
+template<typename P, typename R>
+auto parse(P, R reader) {
+    static_assert(is_parser_v<P>, "P is not a parser");
+    return P::parse(std::move(reader));
+}
+
 
 }
