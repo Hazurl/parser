@@ -20,7 +20,7 @@ constexpr Handler<F> handler;
 template<typename P, auto& F>
 struct Handle : Parser<Handle<P, F>, details::parsed_type_t<P>> {
     static_assert(details::is_parser_soft_check_v<P>, "First parameter of Handle must be a parser");
-    static_assert(P::can_fail, "The parser can't fail, thus you can't ahndle its error");
+    static_assert(P::can_fail, "The parser can't fail, thus you can't handle its error");
     static_assert(std::is_invocable_v<decltype(F), details::error_of_t<details::result_type_t<P>>>, "Handler is not invokable with the parser's error type");
     static_assert(std::is_constructible_v<details::parsed_type_t<P>, std::invoke_result_t<decltype(F), details::error_of_t<details::result_type_t<P>>>>, 
         "Handler's return type can't construct the return type of the parser");
