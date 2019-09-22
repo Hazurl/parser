@@ -12,20 +12,25 @@
 namespace wpr::test {
 
 struct Result {
-    struct Unexpected {
+    struct UnexpectedResult {
         bool expected_is_success;
         std::string expected;
         bool result_is_success;
         std::string result;
     };
 
+    struct UnexpectedCursor {
+        std::size_t expected;
+        std::size_t result;
+    };
+
     std::string message;
     std::string input;
-    std::optional<Unexpected> unexpected;  
+    std::optional<std::variant<UnexpectedResult, UnexpectedCursor>> unexpected;  
 };
 
 template<typename P, bool isSuccess, typename E, typename R = BoundedReader>
-Result run_test(std::string const& message, std::string const& input, E expected) {
+Result run_test(std::string const& message, std::size_t expected_cursor, std::string const& input, E expected) {
     static_assert(details::is_parser_v<P, R>, "Unfortunetly, P is not a parser...");
 
     R reader(input);
@@ -37,24 +42,38 @@ Result run_test(std::string const& message, std::string const& input, E expected
 
     if (res.is_success() == isSuccess) {
         auto const& value = [&] () { if constexpr (isSuccess || !P::can_fail) return res.success(); else return res.error(); }();
-        if constexpr (details::is_same_HK_type_v<std::decay_t<decltype(value)>, Sum>) {
-            if constexpr (details::is_in_v<std::decay_t<E>, details::list_from_t<Sum, std::decay_t<decltype(value)>>>) {
-                if (std::get<std::decay_t<E>>(value) == expected) {
-                    return test_result;
+        constexpr bool E_in_sum = [] {
+            if constexpr (details::is_same_HK_type_v<std::decay_t<decltype(value)>, Sum>)
+                if constexpr (details::is_in_v<std::decay_t<E>, details::list_from_t<Sum, std::decay_t<decltype(value)>>>)
+                    return true;
+
+            return false;
+        }();
+
+        if constexpr (E_in_sum) {
+            if (std::get<std::decay_t<E>>(value) == expected) {
+                if (res.cursor() != expected_cursor) {
+                    Result::UnexpectedCursor info;
+                    info.expected = expected_cursor;
+                    info.result = res.cursor();
+                    test_result.unexpected = std::move(info);
                 }
-            } else {
-                if (value == expected) {
-                    return test_result;
-                }
+                return test_result;
             }
         } else {
             if (value == expected) {
+                if (res.cursor() != expected_cursor) {
+                    Result::UnexpectedCursor info;
+                    info.expected = expected_cursor;
+                    info.result = res.cursor();
+                    test_result.unexpected = std::move(info);
+                }
                 return test_result;
             }
         }
     }
 
-    Result::Unexpected info;
+    Result::UnexpectedResult info;
     info.expected_is_success = isSuccess;
     info.result_is_success = res.is_success();
     info.expected = describe(expected);
@@ -72,12 +91,13 @@ Result run_test(std::string const& message, std::string const& input, E expected
 
 struct Input {
     std::string input;
+    std::size_t cursor;
 };
 
 template<bool isSuccess, typename R>
 struct SpecificCase {
     R res;
-    std::vector<std::string> inputs = {};
+    std::vector<Input> inputs = {};
 };
 
 static inline constexpr bool successful = true;
@@ -101,11 +121,25 @@ template<typename E>
 auto should_fail(E&& err) { return SpecificCase<failure, E>{ std::forward<E>(err), {} }; }
 
 template<typename M>
-auto on(M&& m) { return Input{ std::string{ std::forward<M>(m) }}; }
+auto on(M&& m, std::intmax_t cursor) { 
+    Input input{ std::string{ std::forward<M>(m) }, 0 }; 
+    input.cursor = static_cast<std::size_t>(
+        cursor < 0 ? 
+            static_cast<std::intmax_t>(input.input.size()) + cursor 
+        :   cursor); 
+    return input; 
+}
+
+template<typename M>
+auto on(M&& m) { 
+    Input input{ std::string{ std::forward<M>(m) }, 0 }; 
+    input.cursor = input.input.size(); 
+    return input; 
+}
 
 template<bool isSuccess, typename R>
 auto operator >> (SpecificCase<isSuccess, R> s, Input o) {
-    s.inputs.emplace_back(std::move(o.input));
+    s.inputs.emplace_back(std::move(o));
     return s;
 }
 
@@ -114,7 +148,7 @@ Case make_case(SpecificCase<isSuccess, R> c) {
     return [specific_case = std::move(c)] (std::string const& message) {
         std::vector<Result> results;
         for(auto const& i : specific_case.inputs) {
-            auto result = run_test<P, isSuccess>(message, i, specific_case.res);
+            auto result = run_test<P, isSuccess>(message, i.cursor, i.input, specific_case.res);
             results.emplace_back(std::move(result));
         }
 
@@ -159,14 +193,21 @@ Tester& operator += (Tester& tester, Parser<P> const& p) {
             if (!res.unexpected) {
                 ++success;
             } else {
-                Result::Unexpected& info = *res.unexpected;
-                auto expected_color = info.expected_is_success ? ws::module::colour::fg::green : ws::module::colour::fg::red;
-                auto result_color = info.result_is_success ? ws::module::colour::fg::green : ws::module::colour::fg::red;
-
                 ws::module::print(ws::module::tabs(1), ws::module::style::bold, ws::module::colour::fg::cyan, "[", res.input, "]", ws::module::style::reset);
-                ws::module::println(
-                    ", expected ", ws::module::style::bold, expected_color, "[", info.expected, "]", ws::module::style::reset,
-                    " but got ", ws::module::style::bold, result_color, "[", info.result, "]", ws::module::style::reset);
+
+                if (auto* value = std::get_if<Result::UnexpectedResult>(&*res.unexpected)) {
+                    auto expected_color = value->expected_is_success ? ws::module::colour::fg::green : ws::module::colour::fg::red;
+                    auto result_color = value->result_is_success ? ws::module::colour::fg::green : ws::module::colour::fg::red;
+
+                    ws::module::println(
+                        ", expected ", ws::module::style::bold, expected_color, "[", value->expected, "]", ws::module::style::reset,
+                        " but got ", ws::module::style::bold, result_color, "[", value->result, "]", ws::module::style::reset);
+                } else {
+                    auto& cursor = std::get<Result::UnexpectedCursor>(*res.unexpected);
+                    ws::module::println(
+                        ", expected cursor to be ", ws::module::style::bold, ws::module::colour::fg::magenta, cursor.expected, ws::module::style::reset,
+                        " but got ", ws::module::style::bold, ws::module::colour::fg::magenta, cursor.result, ws::module::style::reset);
+                }
             }
         }
     }

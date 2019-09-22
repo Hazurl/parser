@@ -160,7 +160,7 @@ int main() {
     tester += wprt::it("Next", wpr::nextc) 
         > wprt::should_be('s')
             >> wprt::on("s")
-            >> wprt::on("something")
+            >> wprt::on("something", 1)
 
         > wprt::should_fail(wpre::EndOfFile{})
             >> wprt::on("")
@@ -169,7 +169,7 @@ int main() {
     tester += wprt::it("Optional next", wpr::opt<wpr::nextc>) 
         > wprt::should_be(wpr::Maybe<char>{ 's' })
             >> wprt::on("s")
-            >> wprt::on("something")
+            >> wprt::on("something", 1)
 
         > wprt::should_be(wpr::Maybe<char>{})
             >> wprt::on("")
@@ -178,7 +178,7 @@ int main() {
     tester += wprt::it("Double next", wpr::seq<wpr::nextc, wpr::nextc>) 
         > wprt::should_be(wpr::Product('s', 'o'))
             >> wprt::on("so")
-            >> wprt::on("something")
+            >> wprt::on("something", 2)
 
         > wprt::should_fail(wpre::EndOfFile{})
             >> wprt::on("")
@@ -188,23 +188,23 @@ int main() {
     tester += wprt::it("Match 's'", wpr::ch<'s'>) 
         > wprt::should_be('s')
             >> wprt::on("s")
-            >> wprt::on("something")
+            >> wprt::on("something", 1)
 
         > wprt::should_fail(wpre::NotMatching<'s'>{})
-            >> wprt::on("z")
+            >> wprt::on("z", 0)
 
         > wprt::should_fail(wpre::EndOfFile{})
             >> wprt::on("")
     ;
 
-    tester += wprt::it("Match 's'", wpr::first<wpr::ch<'s'>, wpr::nextc>) 
+    tester += wprt::it("Match 's' or any character", wpr::first<wpr::ch<'s'>, wpr::nextc>) 
         > wprt::should_be(wpr::Sum<char>('s'))
             >> wprt::on("s")
-            >> wprt::on("something")
+            >> wprt::on("something", 1)
 
         > wprt::should_be(wpr::Sum<char>('a'))
             >> wprt::on("a")
-            >> wprt::on("another")
+            >> wprt::on("another", 1)
 
         > wprt::should_fail(wpr::Product<wpr::Sum<wpre::NotMatching<'s'>, wpre::EndOfFile>, wpre::EndOfFile>{
             wpr::Sum<wpre::NotMatching<'s'>, wpre::EndOfFile>{ wpre::EndOfFile{} },
@@ -216,17 +216,17 @@ int main() {
     tester += wprt::it("Match 'a' or 's'", wpr::first<wpr::ch<'s'>, wpr::ch<'a'>>) 
         > wprt::should_be(wpr::Sum<char>('s'))
             >> wprt::on("s")
-            >> wprt::on("something")
+            >> wprt::on("something", 1)
 
         > wprt::should_be(wpr::Sum<char>('a'))
             >> wprt::on("a")
-            >> wprt::on("another")
+            >> wprt::on("another", 1)
 
         > wprt::should_fail(wpr::Product<wpr::Sum<wpre::NotMatching<'s'>, wpre::EndOfFile>, wpr::Sum<wpre::NotMatching<'a'>, wpre::EndOfFile>>(
             wpr::Sum<wpre::NotMatching<'s'>, wpre::EndOfFile>{ wpre::NotMatching<'s'>{} },
             wpr::Sum<wpre::NotMatching<'a'>, wpre::EndOfFile>{ wpre::NotMatching<'a'>{} }
         ))
-            >> wprt::on("foo")
+            >> wprt::on("foo", 0)
 
         > wprt::should_fail(wpr::Product<wpr::Sum<wpre::NotMatching<'s'>, wpre::EndOfFile>, wpr::Sum<wpre::NotMatching<'a'>, wpre::EndOfFile>>(
             wpr::Sum<wpre::NotMatching<'s'>, wpre::EndOfFile>{ wpre::EndOfFile{} },
@@ -238,7 +238,7 @@ int main() {
     tester += wprt::it("Map next", wpr::nextc [ wpr::map<char_to_int> ]) 
         > wprt::should_be(char_to_int('s'))
             >> wprt::on("s")
-            >> wprt::on("something")
+            >> wprt::on("something", 1)
 
         > wprt::should_fail(wpre::EndOfFile{})
             >> wprt::on("")
@@ -247,10 +247,10 @@ int main() {
     tester += wprt::it("Map optional next", wpr::opt<wpr::ch<'s'>> [ wpr::map<default_maybe> ]) 
         > wprt::should_be('s')
             >> wprt::on("s")
-            >> wprt::on("something")
+            >> wprt::on("something", 1)
 
         > wprt::should_be(' ')
-            >> wprt::on("foo")
+            >> wprt::on("foo", 0)
             >> wprt::on("")
     ;
 
@@ -281,7 +281,7 @@ int main() {
 
     tester += wprt::it("Repeat between 5 and 6 times next", wpr::repeat<wpr::nextc, 5, 6, std::basic_string>) 
         > wprt::should_be(std::string{ "someth" })
-            >> wprt::on("something")
+            >> wprt::on("something", 6)
 
         > wprt::should_be(std::string{ "somet" })
             >> wprt::on("somet")
@@ -294,7 +294,7 @@ int main() {
 
     tester += wprt::it("Repeat 3 times next", wpr::exact<wpr::nextc, 3, std::basic_string>) 
         > wprt::should_be(std::string{ "som" })
-            >> wprt::on("something")
+            >> wprt::on("something", 3)
             >> wprt::on("som")
 
         > wprt::should_fail(wpre::EndOfFile{})
@@ -316,11 +316,11 @@ int main() {
 
     tester += wprt::it("Filter next", wpr::nextc [ wpr::filter<is_digit> ]) 
         > wprt::should_be('1')
-            >> wprt::on("123")
+            >> wprt::on("123", 1)
             >> wprt::on("1")
 
         > wprt::should_fail(wpre::PredicateFailure{})
-            >> wprt::on("s")
+            >> wprt::on("s", 0)
 
         > wprt::should_fail(wpre::EndOfFile{})
             >> wprt::on("")
@@ -328,11 +328,11 @@ int main() {
 
     tester += wprt::it("Filter then map next", wpr::nextc [ wpr::filter<is_digit> ] [ wpr::map<digit_to_int> ]) 
         > wprt::should_be(1)
-            >> wprt::on("123")
+            >> wprt::on("123", 1)
             >> wprt::on("1")
 
         > wprt::should_fail(wpre::PredicateFailure{})
-            >> wprt::on("s")
+            >> wprt::on("s", 0)
 
         > wprt::should_fail(wpre::EndOfFile{})
             >> wprt::on("")
@@ -341,7 +341,7 @@ int main() {
     tester += wprt::it("Handle next's EOF error", wpr::nextc [ wpr::handler<EOF_to_space> ]) 
         > wprt::should_be('s')
             >> wprt::on("s")
-            >> wprt::on("something")
+            >> wprt::on("something", 1)
 
         > wprt::should_be(' ')
             >> wprt::on("")
@@ -350,7 +350,7 @@ int main() {
     tester += wprt::it("Next with default", wpr::nextc [ wpr::or_else<' '> ]) 
         > wprt::should_be('s')
             >> wprt::on("s")
-            >> wprt::on("something")
+            >> wprt::on("something", 1)
 
         > wprt::should_be(' ')
             >> wprt::on("")
@@ -365,35 +365,35 @@ int main() {
     ) 
         > wprt::should_be(123456)
             >> wprt::on("(123456)")
-            >> wprt::on("(123456) something")
+            >> wprt::on("(123456) something", 8)
 
         > wprt::should_fail(wpr::Sum<wpre::NotMatching<'('>, wpre::EndOfFile>{ wpre::NotMatching<'('>{} })
-            >> wprt::on("13)")
-            >> wprt::on("[13)")
+            >> wprt::on("13)", 0)
+            >> wprt::on("[13)", 0)
 
         > wprt::should_fail(wpr::Sum<wpre::NotMatching<'('>, wpre::EndOfFile>{ wpre::EndOfFile{} })
             >> wprt::on("")
 
         > wprt::should_fail(wpr::Sum<wpre::NotMatching<')'>, wpre::EndOfFile>{ wpre::NotMatching<')'>{} })
-            >> wprt::on("(1 ")
+            >> wprt::on("(1 ", 2)
 
         > wprt::should_fail(wpr::Sum<wpre::NotMatching<')'>, wpre::EndOfFile>{ wpre::EndOfFile{} })
-            >> wprt::on("(1")
+            >> wprt::on("(1", 2)
     ;
 
     tester += wprt::it("Peek", wpr::seq<wpr::nextc, wpr::nextc, wpr::nextc> [ wpr::peek<2> ]) 
         > wprt::should_be('m')
-            >> wprt::on("something")
+            >> wprt::on("something", 3)
             >> wprt::on("som")
 
         > wprt::should_fail(wpre::EndOfFile{})
-            >> wprt::on("so")
+            >> wprt::on("so", 2)
             >> wprt::on("")
     ;
 
     tester += wprt::it("Peek error", wpr::first<wpr::nextc, wpr::nextc, wpr::nextc> [ wpr::peek_err<2> ]) 
         > wprt::should_be(wpr::Sum<char>('s'))
-            >> wprt::on("something")
+            >> wprt::on("something", 1)
             >> wprt::on("s")
 
         > wprt::should_fail(wpre::EndOfFile{})
@@ -402,17 +402,17 @@ int main() {
 
     tester += wprt::it("Select", wpr::seq<wpr::nextc, wpr::nextc, wpr::nextc> [ wpr::select<2, 1, 2> ]) 
         > wprt::should_be(wpr::Product('m', 'o', 'm'))
-            >> wprt::on("something")
+            >> wprt::on("something", 3)
             >> wprt::on("som")
 
         > wprt::should_fail(wpre::EndOfFile{})
-            >> wprt::on("so")
+            >> wprt::on("so", 2)
             >> wprt::on("")
     ;
 
     tester += wprt::it("Select error", wpr::first<wpr::nextc, wpr::nextc> [ wpr::select_err<1, 0, 1> ]) 
         > wprt::should_be(wpr::Sum<char>('s'))
-            >> wprt::on("something")
+            >> wprt::on("something", 1)
             >> wprt::on("s")
 
         > wprt::should_fail(wpr::Product(wpre::EndOfFile{}, wpre::EndOfFile{}, wpre::EndOfFile{}))
