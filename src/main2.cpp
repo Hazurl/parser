@@ -9,16 +9,15 @@
 
 #include <logger/logger.h>
 #include <json.hpp>
-#include <ws/parser2/Test.hpp>
-#include <ws/parser2/Readers.hpp>
-#include <ws/parser2/Parsers.hpp>
-#include <ws/parser2/Containers.hpp>
-#include <ws/parser2/Details.hpp>
+#include <wpr/Test.hpp>
+#include <wpr/Readers.hpp>
+#include <wpr/Parsers.hpp>
+#include <wpr/Containers.hpp>
+#include <wpr/Details.hpp>
 
-namespace wsp = ws::parser2;
-namespace wspe = wsp::error;
-namespace wspd = wsp::details;
-namespace wspt = wsp::test;
+namespace wpre = wpr::error;
+namespace wprd = wpr::details;
+namespace wprt = wpr::test;
 
 /*
 struct StringReader {
@@ -60,89 +59,89 @@ struct debug_t;
  */
 
 /*
-struct GoodParser : wsp::Parser<GoodParser, char, wspe::EndOfFile> {
-    template<typename R> static wsp::Result<char, wspe::EndOfFile> parse(R reader) { return wsp::success(reader.cursor, '0'); }
+struct GoodParser : wpr::Parser<GoodParser, char, wpre::EndOfFile> {
+    template<typename R> static wpr::Result<char, wpre::EndOfFile> parse(R reader) { return wpr::success(reader.cursor, '0'); }
 };
-static_assert(wspd::is_parser_valid_v<wsp::BoundedReader, GoodParser>);
+static_assert(wprd::is_parser_valid_v<wpr::BoundedReader, GoodParser>);
 */
 /*
 //    static_assert(parser_details::false_v<T, Es...>, "The parse method's return type should be a Result");
-struct ReturnTypeNotResult : wsp::Parser<ReturnTypeNotResult, char, wspe::EndOfFile> {
+struct ReturnTypeNotResult : wpr::Parser<ReturnTypeNotResult, char, wpre::EndOfFile> {
     template<typename R> static char parse(R reader) { return '0'; }
 };
-static_assert(wspd::is_parser_valid_v<wsp::BoundedReader, ReturnTypeNotResult>);
+static_assert(wprd::is_parser_valid_v<wpr::BoundedReader, ReturnTypeNotResult>);
 */
 /*
 //    static_assert(parser_details::false_v<T>, "The parse method's return type is a Result with the wrong success type");
-struct ResultSuccessWrong : wsp::Parser<ResultSuccessWrong, char, wspe::EndOfFile> {
-    template<typename R> static wsp::Result<int, wspe::EndOfFile> parse(R reader) { return wsp::success(reader.cursor, 1337); }
+struct ResultSuccessWrong : wpr::Parser<ResultSuccessWrong, char, wpre::EndOfFile> {
+    template<typename R> static wpr::Result<int, wpre::EndOfFile> parse(R reader) { return wpr::success(reader.cursor, 1337); }
 };
-static_assert(wspd::is_parser_valid_v<wsp::BoundedReader, ResultSuccessWrong>);
+static_assert(wprd::is_parser_valid_v<wpr::BoundedReader, ResultSuccessWrong>);
 */
 /*
 //    static_assert(parser_details::false_v<Es...>, "The parse method's return type is a Result with the wrong error list");
-struct ResultErrorsWrong : wsp::Parser<ResultErrorsWrong, char, wspe::EndOfFile> {
-    template<typename R> static wsp::Result<char, wspe::EndOfFile, int> parse(R reader) { return wsp::success(reader.cursor, '0'); }
+struct ResultErrorsWrong : wpr::Parser<ResultErrorsWrong, char, wpre::EndOfFile> {
+    template<typename R> static wpr::Result<char, wpre::EndOfFile, int> parse(R reader) { return wpr::success(reader.cursor, '0'); }
 };
-static_assert(wspd::is_parser_valid_v<wsp::BoundedReader, ResultErrorsWrong>);
+static_assert(wprd::is_parser_valid_v<wpr::BoundedReader, ResultErrorsWrong>);
 */
 /*
 //    static_assert(parser_details::false_v<T, Es...>, "The parse method's return type is a Result with the wrong success type and error list");
-struct ResultSuccessAndErrorsWrong : wsp::Parser<ResultSuccessAndErrorsWrong, char, wspe::EndOfFile> {
-    template<typename R> static wsp::Result<int, wspe::EndOfFile, int> parse(R reader) { return wsp::success(reader.cursor, 1337); }
+struct ResultSuccessAndErrorsWrong : wpr::Parser<ResultSuccessAndErrorsWrong, char, wpre::EndOfFile> {
+    template<typename R> static wpr::Result<int, wpre::EndOfFile, int> parse(R reader) { return wpr::success(reader.cursor, 1337); }
 };
-static_assert(wspd::is_parser_valid_v<wsp::BoundedReader, ResultSuccessAndErrorsWrong>);
+static_assert(wprd::is_parser_valid_v<wpr::BoundedReader, ResultSuccessAndErrorsWrong>);
 */
 /*
 //    static_assert(parser_details::false_v<R>, "The parse method should be static");
-struct ParseNotStatic : wsp::Parser<ParseNotStatic, char, wspe::EndOfFile> {
-    template<typename R> wsp::Result<char, wspe::EndOfFile> parse(R reader) { return wsp::success(reader.cursor, '0'); }
+struct ParseNotStatic : wpr::Parser<ParseNotStatic, char, wpre::EndOfFile> {
+    template<typename R> wpr::Result<char, wpre::EndOfFile> parse(R reader) { return wpr::success(reader.cursor, '0'); }
 };
-static_assert(wspd::is_parser_valid_v<wsp::BoundedReader, ParseNotStatic>);
+static_assert(wprd::is_parser_valid_v<wpr::BoundedReader, ParseNotStatic>);
 */
 /*
 //    static_assert(parser_details::false_v<P>, "The parse member is detected but doesn't seems like a static method, makes sure it has the signature: \ntemplate<typename Reader>\nstatic Result<T, Es...> parse(Reader reader)");
-struct ParseNotFunction : wsp::Parser<ParseNotFunction, char, wspe::EndOfFile> {
+struct ParseNotFunction : wpr::Parser<ParseNotFunction, char, wpre::EndOfFile> {
     template<typename R> R parse; 
 };
-static_assert(wspd::is_parser_valid_v<wsp::BoundedReader, ParseNotFunction>);
+static_assert(wprd::is_parser_valid_v<wpr::BoundedReader, ParseNotFunction>);
 */
 /*
 //    static_assert(parser_details::false_v<R>, "The parse method should only have one argument, the reader (taken by value)");
-struct ParseWithMoreArg : wsp::Parser<ParseWithMoreArg, char, wspe::EndOfFile> {
-    template<typename R> static wsp::Result<char, wspe::EndOfFile> parse(R reader, int) { return wsp::success(reader.cursor, '0'); }
+struct ParseWithMoreArg : wpr::Parser<ParseWithMoreArg, char, wpre::EndOfFile> {
+    template<typename R> static wpr::Result<char, wpre::EndOfFile> parse(R reader, int) { return wpr::success(reader.cursor, '0'); }
 };
-static_assert(wspd::is_parser_valid_v<wsp::BoundedReader, ParseWithMoreArg>);
+static_assert(wprd::is_parser_valid_v<wpr::BoundedReader, ParseWithMoreArg>);
 */
 /*
 //    static_assert(parser_details::false_v<R>, "The parse method isn't detected, makes sure it has the signature: \ntemplate<typename Reader>\nstatic Result<T, Es...> parse(Reader reader)");
-struct Typo : wsp::Parser<Typo, char, wspe::EndOfFile> {
-    template<typename R> static wsp::Result<char, wspe::EndOfFile> parse_(R reader) { return wsp::success(reader.cursor, '0'); }
+struct Typo : wpr::Parser<Typo, char, wpre::EndOfFile> {
+    template<typename R> static wpr::Result<char, wpre::EndOfFile> parse_(R reader) { return wpr::success(reader.cursor, '0'); }
 };
-static_assert(wspd::is_parser_valid_v<wsp::BoundedReader, Typo>);
+static_assert(wprd::is_parser_valid_v<wpr::BoundedReader, Typo>);
 */
 /*
 //    static_assert(parser_details::false_v<P>, "The type you wants to validate doesn't inherit from Parser, to be more exact, the parser_type alias isn't a parser");
-struct ParserTypeNotParser : wsp::BoundedReader {
-    using parser_type = wsp::BoundedReader;
-    template<typename R> static wsp::Result<char, wspe::EndOfFile> parse(R reader) { return wsp::success(reader.cursor, '0'); }
+struct ParserTypeNotParser : wpr::BoundedReader {
+    using parser_type = wpr::BoundedReader;
+    template<typename R> static wpr::Result<char, wpre::EndOfFile> parse(R reader) { return wpr::success(reader.cursor, '0'); }
 };
-static_assert(wspd::is_parser_valid_v<wsp::BoundedReader, ParserTypeNotParser>);
+static_assert(wprd::is_parser_valid_v<wpr::BoundedReader, ParserTypeNotParser>);
 */
 /*
 //    static_assert(parser_details::false_v<P>, "The type you wants to validate doesn't inherit from Parser");
 struct NoBaseParser {
-    template<typename R> static wsp::Result<char, wspe::EndOfFile> parse(R reader) { return wsp::success(reader.cursor, '0'); }
+    template<typename R> static wpr::Result<char, wpre::EndOfFile> parse(R reader) { return wpr::success(reader.cursor, '0'); }
 };
-static_assert(wspd::is_parser_valid_v<wsp::BoundedReader, NoBaseParser>);
+static_assert(wprd::is_parser_valid_v<wpr::BoundedReader, NoBaseParser>);
 */
 
 int char_to_int(char c) { return static_cast<int>(c); }
 int digit_to_int(char c) { return c - '0'; }
-char default_maybe(wsp::Maybe<char>&& m) { return m.value_or(' '); };
+char default_maybe(wpr::Maybe<char>&& m) { return m.value_or(' '); };
 bool is_digit(char c) { return c >= '0' && c <= '9'; }
-char EOF_to_space(wspe::EndOfFile) { return ' '; };
-std::string select_middle(wsp::Product<char, std::string, char>&& p) {
+char EOF_to_space(wpre::EndOfFile) { return ' '; };
+std::string select_middle(wpr::Product<char, std::string, char>&& p) {
     return std::get<1>(p);
 }
 int string_to_int(std::string&& str) {
@@ -156,268 +155,268 @@ int string_to_int(std::string&& str) {
 
 int main() {
 
-    wspt::Tester tester;
+    wprt::Tester tester;
 
-    tester += wspt::it("Next", wsp::nextc) 
-        > wspt::should_be('s')
-            >> wspt::on("s")
-            >> wspt::on("something")
+    tester += wprt::it("Next", wpr::nextc) 
+        > wprt::should_be('s')
+            >> wprt::on("s")
+            >> wprt::on("something")
 
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("")
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Optional next", wsp::opt<wsp::nextc>) 
-        > wspt::should_be(wsp::Maybe<char>{ 's' })
-            >> wspt::on("s")
-            >> wspt::on("something")
+    tester += wprt::it("Optional next", wpr::opt<wpr::nextc>) 
+        > wprt::should_be(wpr::Maybe<char>{ 's' })
+            >> wprt::on("s")
+            >> wprt::on("something")
 
-        > wspt::should_be(wsp::Maybe<char>{})
-            >> wspt::on("")
+        > wprt::should_be(wpr::Maybe<char>{})
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Double next", wsp::seq<wsp::nextc, wsp::nextc>) 
-        > wspt::should_be(wsp::Product('s', 'o'))
-            >> wspt::on("so")
-            >> wspt::on("something")
+    tester += wprt::it("Double next", wpr::seq<wpr::nextc, wpr::nextc>) 
+        > wprt::should_be(wpr::Product('s', 'o'))
+            >> wprt::on("so")
+            >> wprt::on("something")
 
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("")
-            >> wspt::on("s")
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("")
+            >> wprt::on("s")
     ;
 
-    tester += wspt::it("Match 's'", wsp::ch<'s'>) 
-        > wspt::should_be('s')
-            >> wspt::on("s")
-            >> wspt::on("something")
+    tester += wprt::it("Match 's'", wpr::ch<'s'>) 
+        > wprt::should_be('s')
+            >> wprt::on("s")
+            >> wprt::on("something")
 
-        > wspt::should_fail(wspe::NotMatching<'s'>{})
-            >> wspt::on("z")
+        > wprt::should_fail(wpre::NotMatching<'s'>{})
+            >> wprt::on("z")
 
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("")
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Match 's'", wsp::first<wsp::ch<'s'>, wsp::nextc>) 
-        > wspt::should_be(wsp::Sum<char>('s'))
-            >> wspt::on("s")
-            >> wspt::on("something")
+    tester += wprt::it("Match 's'", wpr::first<wpr::ch<'s'>, wpr::nextc>) 
+        > wprt::should_be(wpr::Sum<char>('s'))
+            >> wprt::on("s")
+            >> wprt::on("something")
 
-        > wspt::should_be(wsp::Sum<char>('a'))
-            >> wspt::on("a")
-            >> wspt::on("another")
+        > wprt::should_be(wpr::Sum<char>('a'))
+            >> wprt::on("a")
+            >> wprt::on("another")
 
-        > wspt::should_fail(wsp::Product<wsp::Sum<wspe::NotMatching<'s'>, wspe::EndOfFile>, wspe::EndOfFile>{
-            wsp::Sum<wspe::NotMatching<'s'>, wspe::EndOfFile>{ wspe::EndOfFile{} },
-            wspe::EndOfFile{}
+        > wprt::should_fail(wpr::Product<wpr::Sum<wpre::NotMatching<'s'>, wpre::EndOfFile>, wpre::EndOfFile>{
+            wpr::Sum<wpre::NotMatching<'s'>, wpre::EndOfFile>{ wpre::EndOfFile{} },
+            wpre::EndOfFile{}
         })
-            >> wspt::on("")
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Match 'a' or 's'", wsp::first<wsp::ch<'s'>, wsp::ch<'a'>>) 
-        > wspt::should_be(wsp::Sum<char>('s'))
-            >> wspt::on("s")
-            >> wspt::on("something")
+    tester += wprt::it("Match 'a' or 's'", wpr::first<wpr::ch<'s'>, wpr::ch<'a'>>) 
+        > wprt::should_be(wpr::Sum<char>('s'))
+            >> wprt::on("s")
+            >> wprt::on("something")
 
-        > wspt::should_be(wsp::Sum<char>('a'))
-            >> wspt::on("a")
-            >> wspt::on("another")
+        > wprt::should_be(wpr::Sum<char>('a'))
+            >> wprt::on("a")
+            >> wprt::on("another")
 
-        > wspt::should_fail(wsp::Product<wsp::Sum<wspe::NotMatching<'s'>, wspe::EndOfFile>, wsp::Sum<wspe::NotMatching<'a'>, wspe::EndOfFile>>(
-            wsp::Sum<wspe::NotMatching<'s'>, wspe::EndOfFile>{ wspe::NotMatching<'s'>{} },
-            wsp::Sum<wspe::NotMatching<'a'>, wspe::EndOfFile>{ wspe::NotMatching<'a'>{} }
+        > wprt::should_fail(wpr::Product<wpr::Sum<wpre::NotMatching<'s'>, wpre::EndOfFile>, wpr::Sum<wpre::NotMatching<'a'>, wpre::EndOfFile>>(
+            wpr::Sum<wpre::NotMatching<'s'>, wpre::EndOfFile>{ wpre::NotMatching<'s'>{} },
+            wpr::Sum<wpre::NotMatching<'a'>, wpre::EndOfFile>{ wpre::NotMatching<'a'>{} }
         ))
-            >> wspt::on("foo")
+            >> wprt::on("foo")
 
-        > wspt::should_fail(wsp::Product<wsp::Sum<wspe::NotMatching<'s'>, wspe::EndOfFile>, wsp::Sum<wspe::NotMatching<'a'>, wspe::EndOfFile>>(
-            wsp::Sum<wspe::NotMatching<'s'>, wspe::EndOfFile>{ wspe::EndOfFile{} },
-            wsp::Sum<wspe::NotMatching<'a'>, wspe::EndOfFile>{ wspe::EndOfFile{} }
+        > wprt::should_fail(wpr::Product<wpr::Sum<wpre::NotMatching<'s'>, wpre::EndOfFile>, wpr::Sum<wpre::NotMatching<'a'>, wpre::EndOfFile>>(
+            wpr::Sum<wpre::NotMatching<'s'>, wpre::EndOfFile>{ wpre::EndOfFile{} },
+            wpr::Sum<wpre::NotMatching<'a'>, wpre::EndOfFile>{ wpre::EndOfFile{} }
         ))
-            >> wspt::on("")
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Map next", wsp::nextc [ wsp::map<char_to_int> ]) 
-        > wspt::should_be(char_to_int('s'))
-            >> wspt::on("s")
-            >> wspt::on("something")
+    tester += wprt::it("Map next", wpr::nextc [ wpr::map<char_to_int> ]) 
+        > wprt::should_be(char_to_int('s'))
+            >> wprt::on("s")
+            >> wprt::on("something")
 
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("")
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Map optional next", wsp::opt<wsp::ch<'s'>> [ wsp::map<default_maybe> ]) 
-        > wspt::should_be('s')
-            >> wspt::on("s")
-            >> wspt::on("something")
+    tester += wprt::it("Map optional next", wpr::opt<wpr::ch<'s'>> [ wpr::map<default_maybe> ]) 
+        > wprt::should_be('s')
+            >> wprt::on("s")
+            >> wprt::on("something")
 
-        > wspt::should_be(' ')
-            >> wspt::on("foo")
-            >> wspt::on("")
+        > wprt::should_be(' ')
+            >> wprt::on("foo")
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Many next", wsp::many<wsp::nextc, std::basic_string>) 
-        > wspt::should_be(std::string{ "something" })
-            >> wspt::on("something")
+    tester += wprt::it("Many next", wpr::many<wpr::nextc, std::basic_string>) 
+        > wprt::should_be(std::string{ "something" })
+            >> wprt::on("something")
 
-        > wspt::should_be(std::string{ "s" })
-            >> wspt::on("s")
+        > wprt::should_be(std::string{ "s" })
+            >> wprt::on("s")
 
-        > wspt::should_be(std::string{ "" })
-            >> wspt::on("")
+        > wprt::should_be(std::string{ "" })
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Repeat >=5 next", wsp::repeat<wsp::nextc, 5, wsp::open_maximum, std::basic_string>) 
-        > wspt::should_be(std::string{ "something" })
-            >> wspt::on("something")
+    tester += wprt::it("Repeat >=5 next", wpr::repeat<wpr::nextc, 5, wpr::open_maximum, std::basic_string>) 
+        > wprt::should_be(std::string{ "something" })
+            >> wprt::on("something")
 
-        > wspt::should_be(std::string{ "somet" })
-            >> wspt::on("somet")
+        > wprt::should_be(std::string{ "somet" })
+            >> wprt::on("somet")
 
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("some")
-            >> wspt::on("s")
-            >> wspt::on("")
-    ;
-
-
-    tester += wspt::it("Repeat between 5 and 6 times next", wsp::repeat<wsp::nextc, 5, 6, std::basic_string>) 
-        > wspt::should_be(std::string{ "someth" })
-            >> wspt::on("something")
-
-        > wspt::should_be(std::string{ "somet" })
-            >> wspt::on("somet")
-
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("some")
-            >> wspt::on("")
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("some")
+            >> wprt::on("s")
+            >> wprt::on("")
     ;
 
 
-    tester += wspt::it("Repeat 3 times next", wsp::exact<wsp::nextc, 3, std::basic_string>) 
-        > wspt::should_be(std::string{ "som" })
-            >> wspt::on("something")
-            >> wspt::on("som")
+    tester += wprt::it("Repeat between 5 and 6 times next", wpr::repeat<wpr::nextc, 5, 6, std::basic_string>) 
+        > wprt::should_be(std::string{ "someth" })
+            >> wprt::on("something")
 
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("so")
-            >> wspt::on("")
+        > wprt::should_be(std::string{ "somet" })
+            >> wprt::on("somet")
+
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("some")
+            >> wprt::on("")
     ;
 
 
-    tester += wspt::it("Some next", wsp::some<wsp::nextc, std::basic_string>) 
-        > wspt::should_be(std::string{ "something" })
-            >> wspt::on("something")
+    tester += wprt::it("Repeat 3 times next", wpr::exact<wpr::nextc, 3, std::basic_string>) 
+        > wprt::should_be(std::string{ "som" })
+            >> wprt::on("something")
+            >> wprt::on("som")
 
-        > wspt::should_be(std::string{ "s" })
-            >> wspt::on("s")
-
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("")
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("so")
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Filter next", wsp::nextc [ wsp::filter<is_digit> ]) 
-        > wspt::should_be('1')
-            >> wspt::on("123")
-            >> wspt::on("1")
 
-        > wspt::should_fail(wspe::PredicateFailure{})
-            >> wspt::on("s")
+    tester += wprt::it("Some next", wpr::some<wpr::nextc, std::basic_string>) 
+        > wprt::should_be(std::string{ "something" })
+            >> wprt::on("something")
 
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("")
+        > wprt::should_be(std::string{ "s" })
+            >> wprt::on("s")
+
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Filter then map next", wsp::nextc [ wsp::filter<is_digit> ] [ wsp::map<digit_to_int> ]) 
-        > wspt::should_be(1)
-            >> wspt::on("123")
-            >> wspt::on("1")
+    tester += wprt::it("Filter next", wpr::nextc [ wpr::filter<is_digit> ]) 
+        > wprt::should_be('1')
+            >> wprt::on("123")
+            >> wprt::on("1")
 
-        > wspt::should_fail(wspe::PredicateFailure{})
-            >> wspt::on("s")
+        > wprt::should_fail(wpre::PredicateFailure{})
+            >> wprt::on("s")
 
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("")
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Handle next's EOF error", wsp::nextc [ wsp::handler<EOF_to_space> ]) 
-        > wspt::should_be('s')
-            >> wspt::on("s")
-            >> wspt::on("something")
+    tester += wprt::it("Filter then map next", wpr::nextc [ wpr::filter<is_digit> ] [ wpr::map<digit_to_int> ]) 
+        > wprt::should_be(1)
+            >> wprt::on("123")
+            >> wprt::on("1")
 
-        > wspt::should_be(' ')
-            >> wspt::on("")
+        > wprt::should_fail(wpre::PredicateFailure{})
+            >> wprt::on("s")
+
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Next with default", wsp::nextc [ wsp::or_else<' '> ]) 
-        > wspt::should_be('s')
-            >> wspt::on("s")
-            >> wspt::on("something")
+    tester += wprt::it("Handle next's EOF error", wpr::nextc [ wpr::handler<EOF_to_space> ]) 
+        > wprt::should_be('s')
+            >> wprt::on("s")
+            >> wprt::on("something")
 
-        > wspt::should_be(' ')
-            >> wspt::on("")
+        > wprt::should_be(' ')
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Parse integer in parenthesis", 
-        wsp::seq<
-            wsp::ch<'('>, 
-            wsp::some<wsp::nextc [ wsp::filter<is_digit> ], std::basic_string>, 
-            wsp::ch<')'>
-        > [ wsp::peek<1> ] [ wsp::map<string_to_int> ]
+    tester += wprt::it("Next with default", wpr::nextc [ wpr::or_else<' '> ]) 
+        > wprt::should_be('s')
+            >> wprt::on("s")
+            >> wprt::on("something")
+
+        > wprt::should_be(' ')
+            >> wprt::on("")
+    ;
+
+    tester += wprt::it("Parse integer in parenthesis", 
+        wpr::seq<
+            wpr::ch<'('>, 
+            wpr::some<wpr::nextc [ wpr::filter<is_digit> ], std::basic_string>, 
+            wpr::ch<')'>
+        > [ wpr::peek<1> ] [ wpr::map<string_to_int> ]
     ) 
-        > wspt::should_be(123456)
-            >> wspt::on("(123456)")
-            >> wspt::on("(123456) something")
+        > wprt::should_be(123456)
+            >> wprt::on("(123456)")
+            >> wprt::on("(123456) something")
 
-        > wspt::should_fail(wsp::Sum<wspe::NotMatching<'('>, wspe::EndOfFile>{ wspe::NotMatching<'('>{} })
-            >> wspt::on("13)")
-            >> wspt::on("[13)")
+        > wprt::should_fail(wpr::Sum<wpre::NotMatching<'('>, wpre::EndOfFile>{ wpre::NotMatching<'('>{} })
+            >> wprt::on("13)")
+            >> wprt::on("[13)")
 
-        > wspt::should_fail(wsp::Sum<wspe::NotMatching<'('>, wspe::EndOfFile>{ wspe::EndOfFile{} })
-            >> wspt::on("")
+        > wprt::should_fail(wpr::Sum<wpre::NotMatching<'('>, wpre::EndOfFile>{ wpre::EndOfFile{} })
+            >> wprt::on("")
 
-        > wspt::should_fail(wsp::Sum<wspe::NotMatching<')'>, wspe::EndOfFile>{ wspe::NotMatching<')'>{} })
-            >> wspt::on("(1 ")
+        > wprt::should_fail(wpr::Sum<wpre::NotMatching<')'>, wpre::EndOfFile>{ wpre::NotMatching<')'>{} })
+            >> wprt::on("(1 ")
 
-        > wspt::should_fail(wsp::Sum<wspe::NotMatching<')'>, wspe::EndOfFile>{ wspe::EndOfFile{} })
-            >> wspt::on("(1")
+        > wprt::should_fail(wpr::Sum<wpre::NotMatching<')'>, wpre::EndOfFile>{ wpre::EndOfFile{} })
+            >> wprt::on("(1")
     ;
 
-    tester += wspt::it("Peek", wsp::seq<wsp::nextc, wsp::nextc, wsp::nextc> [ wsp::peek<2> ]) 
-        > wspt::should_be('m')
-            >> wspt::on("something")
-            >> wspt::on("som")
+    tester += wprt::it("Peek", wpr::seq<wpr::nextc, wpr::nextc, wpr::nextc> [ wpr::peek<2> ]) 
+        > wprt::should_be('m')
+            >> wprt::on("something")
+            >> wprt::on("som")
 
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("so")
-            >> wspt::on("")
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("so")
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Peek error", wsp::first<wsp::nextc, wsp::nextc, wsp::nextc> [ wsp::peek_err<2> ]) 
-        > wspt::should_be(wsp::Sum<char>('s'))
-            >> wspt::on("something")
-            >> wspt::on("s")
+    tester += wprt::it("Peek error", wpr::first<wpr::nextc, wpr::nextc, wpr::nextc> [ wpr::peek_err<2> ]) 
+        > wprt::should_be(wpr::Sum<char>('s'))
+            >> wprt::on("something")
+            >> wprt::on("s")
 
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("")
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Select", wsp::seq<wsp::nextc, wsp::nextc, wsp::nextc> [ wsp::select<2, 1, 2> ]) 
-        > wspt::should_be(wsp::Product('m', 'o', 'm'))
-            >> wspt::on("something")
-            >> wspt::on("som")
+    tester += wprt::it("Select", wpr::seq<wpr::nextc, wpr::nextc, wpr::nextc> [ wpr::select<2, 1, 2> ]) 
+        > wprt::should_be(wpr::Product('m', 'o', 'm'))
+            >> wprt::on("something")
+            >> wprt::on("som")
 
-        > wspt::should_fail(wspe::EndOfFile{})
-            >> wspt::on("so")
-            >> wspt::on("")
+        > wprt::should_fail(wpre::EndOfFile{})
+            >> wprt::on("so")
+            >> wprt::on("")
     ;
 
-    tester += wspt::it("Select error", wsp::first<wsp::nextc, wsp::nextc> [ wsp::select_err<1, 0, 1> ]) 
-        > wspt::should_be(wsp::Sum<char>('s'))
-            >> wspt::on("something")
-            >> wspt::on("s")
+    tester += wprt::it("Select error", wpr::first<wpr::nextc, wpr::nextc> [ wpr::select_err<1, 0, 1> ]) 
+        > wprt::should_be(wpr::Sum<char>('s'))
+            >> wprt::on("something")
+            >> wprt::on("s")
 
-        > wspt::should_fail(wsp::Product(wspe::EndOfFile{}, wspe::EndOfFile{}, wspe::EndOfFile{}))
-            >> wspt::on("")
+        > wprt::should_fail(wpr::Product(wpre::EndOfFile{}, wpre::EndOfFile{}, wpre::EndOfFile{}))
+            >> wprt::on("")
     ;
 
     tester.report();
@@ -429,18 +428,18 @@ int main() {
 */
 
     static_assert(
-        wspd::is_parser_valid_v<wsp::BoundedReader, wsp::NextC> &&
-        wspd::is_parser_valid_v<wsp::BoundedReader, wsp::Opt<wsp::NextC>> &&
-        wspd::is_parser_valid_v<wsp::BoundedReader, wsp::Seq<wsp::NextC, wsp::NextC>> &&
-        wspd::is_parser_valid_v<wsp::BoundedReader, wsp::Opt<wsp::Opt<wsp::NextC>>> &&
-        wspd::is_parser_valid_v<wsp::BoundedReader, wsp::Seq<wsp::Seq<wsp::NextC, wsp::NextC>, wsp::NextC>> &&
-        wspd::is_parser_valid_v<wsp::BoundedReader, wsp::Seq<wsp::Opt<wsp::NextC>, wsp::Seq<wsp::NextC, wsp::NextC>>> &&
-        wspd::is_parser_valid_v<wsp::BoundedReader, wsp::First<decltype(wsp::ch<'a'>), wsp::NextC>> &&
-        wspd::is_parser_valid_v<wsp::BoundedReader, wsp::First<wsp::Opt<wsp::NextC>, wsp::Opt<wsp::NextC>>> &&
-        wspd::is_parser_valid_v<wsp::BoundedReader, wsp::Transformer<wsp::NextC, char_to_int>> &&
-        wspd::is_parser_valid_v<wsp::BoundedReader, wsp::Satisfy<wsp::NextC, is_digit>> &&
-        wspd::is_parser_valid_v<wsp::BoundedReader, wsp::Handle<wsp::NextC, EOF_to_space>> &&
-        wspd::is_parser_valid_v<wsp::BoundedReader, wsp::Repeat<wsp::NextC, 2, wsp::open_maximum, std::basic_string>> &&
+        wprd::is_parser_valid_v<wpr::BoundedReader, wpr::NextC> &&
+        wprd::is_parser_valid_v<wpr::BoundedReader, wpr::Opt<wpr::NextC>> &&
+        wprd::is_parser_valid_v<wpr::BoundedReader, wpr::Seq<wpr::NextC, wpr::NextC>> &&
+        wprd::is_parser_valid_v<wpr::BoundedReader, wpr::Opt<wpr::Opt<wpr::NextC>>> &&
+        wprd::is_parser_valid_v<wpr::BoundedReader, wpr::Seq<wpr::Seq<wpr::NextC, wpr::NextC>, wpr::NextC>> &&
+        wprd::is_parser_valid_v<wpr::BoundedReader, wpr::Seq<wpr::Opt<wpr::NextC>, wpr::Seq<wpr::NextC, wpr::NextC>>> &&
+        wprd::is_parser_valid_v<wpr::BoundedReader, wpr::First<decltype(wpr::ch<'a'>), wpr::NextC>> &&
+        wprd::is_parser_valid_v<wpr::BoundedReader, wpr::First<wpr::Opt<wpr::NextC>, wpr::Opt<wpr::NextC>>> &&
+        wprd::is_parser_valid_v<wpr::BoundedReader, wpr::Transformer<wpr::NextC, char_to_int>> &&
+        wprd::is_parser_valid_v<wpr::BoundedReader, wpr::Satisfy<wpr::NextC, is_digit>> &&
+        wprd::is_parser_valid_v<wpr::BoundedReader, wpr::Handle<wpr::NextC, EOF_to_space>> &&
+        wprd::is_parser_valid_v<wpr::BoundedReader, wpr::Repeat<wpr::NextC, 2, wpr::open_maximum, std::basic_string>> &&
         true, 
         "Something is wrong...");
 

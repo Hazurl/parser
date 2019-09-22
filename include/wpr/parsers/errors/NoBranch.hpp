@@ -3,9 +3,9 @@
 #include <string>
 #include <ostream>
 
-#include <ws/parser2/details/Describe.hpp>
+#include <wpr/details/Describe.hpp>
 
-namespace ws::parser2::error {
+namespace wpr::error {
 
 /*
     NoBranch error
@@ -47,7 +47,7 @@ bool operator ==(NoBranch<I> const& lhs, NoBranch<I> const& rhs) {
 
 }
 
-namespace ws::parser2 {
+namespace wpr {
 
 
 

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace ws::parser2 {
+namespace wpr {
 
 struct BoundedReader {
 

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <ws/parser2/Containers.hpp>
-#include <ws/parser2/Details.hpp>
-#include <ws/parser2/parsers/Errors.hpp>
+#include <wpr/Containers.hpp>
+#include <wpr/Details.hpp>
+#include <wpr/parsers/Errors.hpp>
 
-namespace ws::parser2 {
+namespace wpr {
 
 /*
     Inverse parser
