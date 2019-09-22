@@ -62,9 +62,9 @@ struct Binder : Parser<
         auto f_res = F(std::move(res.success()));
         if (f_res.is_error()) {
             if constexpr (P::can_fail && !std::is_same_v<details::error_of_t<details::result_type_t<P>>, details::error_of_t<std::invoke_result_t<decltype(F), details::parsed_type_t<P>>>> ) {
-                return fail(res.cursor(), std::in_place_index_t<1>{}, std::move(f_res.error()));
+                return fail(r.cursor() + f_res.cursor(), std::in_place_index_t<1>{}, std::move(f_res.error()));
             } else {
-                return fail(res.cursor(), std::move(f_res.error()));
+                return fail(r.cursor() + f_res.cursor(), std::move(f_res.error()));
             }
         }
 

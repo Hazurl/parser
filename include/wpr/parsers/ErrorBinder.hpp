@@ -37,7 +37,7 @@ struct ErrorBinder : Parser<
         if (res.is_error()) {
             auto f_res = F(std::move(res.error()));
             if (f_res.is_error()) {
-                return fail(res.cursor(), std::move(f_res.error()));
+                return fail(r.cursor() + f_res.cursor(), std::move(f_res.error()));
             }
             return success(res.cursor(), std::move(f_res).success());
         }
