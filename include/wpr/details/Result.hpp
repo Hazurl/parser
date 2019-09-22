@@ -67,7 +67,7 @@ namespace {
 
     -- Anonymous (because, obviously, I won't give my name)
 */
-/*
+
 template<std::size_t I, typename...Args, typename...Tail>
 decltype(auto) get(std::tuple<Args...>& tuple, details::List<Tail...>) {
     return std::move(std::__get_helper<I, Tail...>(tuple));
@@ -82,7 +82,7 @@ template<typename T, typename Tag, typename...Args>
 T make_from_tuple(Tag tag, std::tuple<Args...>&& tuple) {
     return make_from_tuple_impl<T>(tag, std::move(tuple), std::make_index_sequence<sizeof...(Args)>{});
 }
-*/
+
 }
 
 /*
@@ -94,12 +94,12 @@ decltype(auto) success(std::size_t cursor, Args&&...args) {
     return ResultBuilder{ [tuple = std::make_tuple(cursor, std::forward<Args>(args)...)] (auto r) mutable { 
         using T = typename decltype(r)::type;
 
-        //return make_from_tuple<T>(success_tag, std::move(tuple));
+        return make_from_tuple<T>(success_tag, std::move(tuple));
 
         // I secretly hope this code will work sometimes in the future
-        return std::apply([] (auto&&... values) { 
+        /*return std::apply([] (auto&&... values) { 
             return T(success_tag, std::forward<decltype(values)>(values)...); 
-        }, std::move(tuple));
+        }, std::move(tuple));*/
     }};
 }
 
@@ -117,12 +117,12 @@ decltype(auto) fail(std::size_t cursor, Args&&...args) {
     return ResultBuilder{ [tuple = std::make_tuple(cursor, std::forward<Args>(args)...)] (auto r) mutable { 
         using T = typename decltype(r)::type;
 
-        //return make_from_tuple<T>(error_tag, std::move(tuple));
+        return make_from_tuple<T>(error_tag, std::move(tuple));
 
         // I secretly hope this code will work sometimes in the future
-        return std::apply([] (auto&&... values) { 
+        /*return std::apply([] (auto&&... values) { 
             return T(error_tag, std::forward<decltype(values)>(values)...); 
-        }, std::move(tuple)); 
+        }, std::move(tuple)); */
     }};
 }
 
