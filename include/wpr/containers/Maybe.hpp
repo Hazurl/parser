@@ -3,13 +3,7 @@
 #include <optional>
 #include <ostream>
 
-<<<<<<< refs/remotes/origin/parser-v2:include/wpr/containers/Maybe.hpp
 namespace wpr {
-=======
-#include <ws/parser2/Details.hpp>
-
-namespace ws::parser2 {
->>>>>>> Add some include:include/ws/parser2/containers/Maybe.hpp
 
 /*
     Maybe type

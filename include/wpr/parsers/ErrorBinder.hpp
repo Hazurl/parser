@@ -1,9 +1,9 @@
 #pragma once
 
-#include <ws/parser2/Parsers.hpp>
-#include <ws/parser2/containers/Parser.hpp>
+#include <wpr/Parsers.hpp>
+#include <wpr/containers/Parser.hpp>
 
-namespace ws::parser2 {
+namespace wpr {
 
 template<auto& F>
 struct BindErr {};
@@ -58,7 +58,7 @@ constexpr ErrorBinder<std::decay_t<decltype(P)>, F> error_binder;
 namespace details {
 
 template<auto& F, typename P>
-struct GetTransformer<::ws::parser2::BindErr<F>, P> {
+struct GetTransformer<::wpr::BindErr<F>, P> {
     using type = ErrorBinder<P, F>;
 };
 

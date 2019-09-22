@@ -1,9 +1,9 @@
 #pragma once
 
-#include <ws/parser2/Parsers.hpp>
-#include <ws/parser2/containers/Parser.hpp>
+#include <wpr/Parsers.hpp>
+#include <wpr/containers/Parser.hpp>
 
-namespace ws::parser2 {
+namespace wpr {
 
 /*
     Catcher parser

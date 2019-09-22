@@ -3,14 +3,9 @@
 #include <ostream>
 #include <tuple>
 
-<<<<<<< refs/remotes/origin/parser-v2:include/wpr/containers/Product.hpp
+#include <wpr/details/Describe.hpp>
+
 namespace wpr {
-=======
-#include <ws/parser2/Details.hpp>
-
-
-namespace ws::parser2 {
->>>>>>> Add as_tuple to product:include/ws/parser2/containers/Product.hpp
 
 /*
     Details

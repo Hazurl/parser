@@ -5,11 +5,11 @@
 #include <functional>
 
 #include <logger/logger.h>
-#include <ws/parser2/Readers.hpp>
-#include <ws/parser2/Containers.hpp>
-#include <ws/parser2/Details.hpp>
+#include <wpr/Readers.hpp>
+#include <wpr/Containers.hpp>
+#include <wpr/Details.hpp>
 
-namespace ws::parser2::test {
+namespace wpr::test {
 
 struct Result {
     struct Unexpected {

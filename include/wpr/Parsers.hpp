@@ -14,3 +14,9 @@
 #include <wpr/parsers/Select.hpp>
 #include <wpr/parsers/OrElse.hpp>
 #include <wpr/parsers/Panic.hpp>
+#include <wpr/parsers/Catcher.hpp>
+#include <wpr/parsers/ErrorBinder.hpp>
+#include <wpr/parsers/Binder.hpp>
+#include <wpr/parsers/Unit.hpp>
+#include <wpr/parsers/Inverse.hpp>
+#include <wpr/parsers/Switcher.hpp>

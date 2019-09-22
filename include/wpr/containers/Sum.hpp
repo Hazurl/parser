@@ -3,6 +3,8 @@
 #include <ostream>
 #include <variant>
 
+#include<wpr/details/Describe.hpp>
+
 namespace wpr {
 
 /*
