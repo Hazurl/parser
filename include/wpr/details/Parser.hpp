@@ -214,7 +214,7 @@ namespace wpr {
  */
 template<typename P, typename R>
 auto parse(P, R reader) {
-    static_assert(is_parser_v<P>, "P is not a parser");
+    static_assert(details::is_parser_v<P>, "P is not a parser");
     return P::parse(std::move(reader));
 }
 
